@@ -1,0 +1,30 @@
+{
+    "name": "ultra-discord-uniq-roles-bot",
+    "version": "0.0.0",
+    "description": "Ultra Uniq Bot for Discord Servers",
+    "scripts": {
+        "build": "tsc",
+        "start": "tsc && node dist/index.js",
+        "dev": "ts-node ./src/index.ts",
+        "test:file": "cross-env UNIT_TESTS=1 mocha --timeout 2000000 -r ts-node/register --exit",
+        "test": "npm run test:file \"tests/**/*.spec.ts\""
+    },
+    "license": "ISC",
+    "dependencies": {
+        "discord.js": "^14.8.0",
+        "dotenv": "^16.0.3",
+        "eosjs": "^22.1.0"
+    },
+    "devDependencies": {
+        "@types/dotenv": "^8.2.0",
+        "@types/node": "^18.15.3",
+        "ts-node": "^10.8.0",
+        "typescript": "^4.7.2"
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 120,
+        "singleQuote": true,
+        "trailingComma": "es5"
+    }
+}
