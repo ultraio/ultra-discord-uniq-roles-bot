@@ -34,13 +34,18 @@ Upon connecting their account to this bot it will then periodically update roles
 * Append the following likes to the `.env` file.
   * DISCORD_BOT_TOKEN
     * Obtained under the Bot tab in the Developer Panel
+  * APPLICATION_ID
+    * Obtained under the General Information tab in the Developer Panel
+  * GUILD_ID
+    * ID of the server where this bot is added
   * WEBSERVER_PORT
     * What port to run the WebServer under
   * CNAME
     * Change this to a real URL, or the address of your host if deploying into production.
-
 ```sh
 DISCORD_BOT_TOKEN=
+APPLICATION_ID=
+GUILD_ID=
 WEBSERVER_PORT=3000
 CNAME=localhost
 ```
