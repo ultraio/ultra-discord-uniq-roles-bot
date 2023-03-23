@@ -1,5 +1,4 @@
 import path from 'path';
-import fs from 'fs';
 import * as Utility from '../../utility';
 import express, { Express, Request, Response } from 'express';
 const app: Express = express();
