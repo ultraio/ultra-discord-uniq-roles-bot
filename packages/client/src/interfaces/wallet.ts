@@ -4,18 +4,20 @@ export interface Response<T = Object> {
     message?: string;
 }
 
+type ConnectFunction = () => Promise<Response<{ blockchainid: string; publicKey: string }>>;
+
 export interface UltraApi {
     /**
      * Connect to the ultra wallet extension
      *
-     * @memberof Ultra
+     * @memberof UltraApi
      */
-    connect: () => Promise<Response<{ blockchainid: string; publicKey: string }>>;
+    connect: ConnectFunction;
 
     /**
      * Disconnect the wallet extension
      *
      * @memberof UltraApi
      */
-    disconnect: () => Promise<void>;
+    disconnect(): Promise<void>;
 }

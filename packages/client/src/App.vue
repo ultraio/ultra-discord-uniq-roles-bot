@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { UltraApi } from './interfaces/wallet';
+import { HeaderInfo } from './interfaces/header';
+import { Account } from './interfaces/account';
+
+import Header from './components/Header.vue';
+import Loading from './components/Loading.vue';
+
 let loading = ref(false);
 let isLinking = ref(false);
-let errorMessage = ref('');
-let account = ref<string | undefined>(undefined);
-let permission = ref('active');
-let messageToSign = ref('kljfdskljfklsdjklfsdjkljfklsdjfklsdfsdfsdfds');
+let apiRef = ref<UltraApi>(undefined);
 
-// import HelloWorld from './components/HelloWorld.vue'
+let headerFormat = ref<HeaderInfo>({
+    title: 'Connect with Ultra Wallet',
+    message: 'Connect using your Ultra.io account to link with Discord.',
+});
+
+let accountInfo = ref<Account>();
+
+let messageToSign = ref<string | undefined>(undefined);
+let originalMessage = ref<string | undefined>(undefined);
+let endpointCallback = ref<string | undefined>(undefined);
+
 function getAPI(): UltraApi {
     return window.hasOwnProperty('ultra') && typeof window['ultra'] === 'object' ? window['ultra'] : undefined;
 }
@@ -20,71 +33,67 @@ async function connectWallet() {
     if (typeof ultra === 'undefined') {
         isLinking.value = false;
         loading.value = false;
-        errorMessage.value = 'Extension is not installed.';
+        headerFormat.value = { title: 'Error', message: 'Extension is not installed', asError: true };
         return;
     }
 
     const result = await ultra.connect().catch((err) => {
-        return err;
+        return undefined;
     });
 
-    if (result.status !== 'success') {
+    if (typeof result === 'undefined') {
         isLinking.value = false;
         loading.value = false;
-        errorMessage.value = 'Extension window is already open. Close it, and try refreshing this page.';
+        headerFormat.value = {
+            title: 'Error',
+            message: 'Extension window already open. Close window and refresh this page',
+            asError: true,
+        };
         return;
     }
 
     const [accountName, permissionName] = result.data.blockchainid.split('@');
-    account.value = accountName;
-    permission.value = permissionName;
+    accountInfo.value = {
+        blockchainid: accountName,
+        permission: permissionName,
+        publicKey: result.data.publicKey,
+    };
 
+    headerFormat.value = {
+        title: `Hello, ${accountName}`,
+        message: 'Sign the message below to finish linking your Discord Account.',
+        asError: false,
+    };
+
+    apiRef.value = ultra;
     isLinking.value = false;
     loading.value = false;
 }
+
+onMounted(() => {
+    loading.value = true;
+
+    // http://localhost:3000/sign?cb=http://localhost:3000/verify&hash=67b7c08b6d577c491ac1c083a71c5171f561ec6ab419645ca0f8b47019687076&message=202685967935471617%20is%20linking%20their%20blockchain%20id%20to%20this%20service.%20By%20signing%20this%20message%20this%20confirms%20identification
+    const uri = window.location.search.substring(1);
+    const params = new URLSearchParams(uri);
+
+    messageToSign.value = params.get('hash');
+    originalMessage.value = params.get('message');
+    endpointCallback.value = params.get('cb');
+
+    loading.value = false;
+});
 </script>
 
 <template>
     <div class="card">
-        <div class="stack">
-            <div class="split">
-                <div class="logo no-select">
-                    <img src="/ultra.svg" />
-                </div>
-                <div class="logo-spacer no-select">X</div>
-                <div class="logo no-select">
-                    <img src="/discord.svg" />
-                </div>
-            </div>
-        </div>
-        <h3 class="pt-2 no-select">Ultra x Discord Link Request</h3>
-        <p class="no-select">A message will need to be signed by your Ultra Blockchain account.</p>
-        <!-- Show Loading -->
-        <template v-if="loading">
-            <div class="pt-2" v-if="loading">
-                <div class="lds-roller">
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                </div>
-            </div>
-        </template>
-        <!-- Show Everything Else -->
-        <template v-else-if="!loading && errorMessage">
-            <h3 class="pt-2">Error</h3>
-            <p>{{ errorMessage }}</p>
-        </template>
+        <Header :header="headerFormat" />
+        <Loading v-if="loading" />
         <template v-else>
-            <template v-if="!account">
+            <template v-if="!accountInfo && !headerFormat.asError">
                 <div class="button mt-4" @click="connectWallet">Connect Wallet</div>
             </template>
             <template v-else>
-                <h5>You are signed in as, {{ account }}@{{ permission }}</h5>
                 <div class="message-to-sign">
                     {{ messageToSign }}
                 </div>
@@ -93,7 +102,7 @@ async function connectWallet() {
     </div>
 </template>
 
-<style scoped>
+<style>
 .button {
     display: flex;
     width: 100%;
@@ -184,12 +193,15 @@ async function connectWallet() {
     max-height: 5em;
 }
 
-.message {
-    font-family: 'consolas';
+.message-to-sign {
+    font-family: 'consolas' !important;
     font-size: 12px;
-    border: 2px solid rgb(22, 22, 22);
+    border: 2px solid rgb(28, 28, 28);
     border-radius: 6px;
-    padding: 5px;
+    padding: 10px;
     box-sizing: border-box;
+    background: rgb(22, 22, 22);
+    word-wrap: break-word;
+    text-align: left;
 }
 </style>

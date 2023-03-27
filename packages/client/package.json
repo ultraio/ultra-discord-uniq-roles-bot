@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite build",
+    "dev": "vite --mode=dev --strictPort",
     "vue-dev": "vite --mode=dev --clearScreen=false",
     "start": "vue-tsc && vite build",
     "build": "vue-tsc && vite build",

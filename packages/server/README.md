@@ -8,10 +8,10 @@ From the root directory of this monorepo; run any of the following commands.
 
 ### Dev
 
-Spins up a localhost server to perform development against for the client-side.
+Spins up a localhost server to perform development against for the server-side.
 
 ```
-npm run vue-dev -w client
+npm run -w server
 ```
 
 ### Build
@@ -19,6 +19,6 @@ npm run vue-dev -w client
 Builds the client-side into a single page application, and pushes it to the server folder under `packages/server/dist/html`.
 
 ```
-npm run build -w client
+npm run build -w server
 ```
 
