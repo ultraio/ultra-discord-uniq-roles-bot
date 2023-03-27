@@ -3,8 +3,8 @@
     "version": "0.0.0",
     "description": "Ultra Uniq Bot for Discord Servers",
     "scripts": {
-        "build": "tsc",
-        "start": "tsc && node dist/index.js",
+        "build": "tsc --build --clean && tsc ",
+        "start": "tsc --build --clean && tsc && node dist/index.js",
         "dev": "concurrently \"npx ts-node ./src/index.ts --mode=dev\" \"npm --prefix ../client run dev\"",
         "test:file": "cross-env UNIT_TESTS=1 mocha --timeout 2000000 -r ts-node/register --exit",
         "test": "npm run test:file \"tests/**/*.spec.ts\""

@@ -20,4 +20,15 @@ export interface UltraApi {
      * @memberof UltraApi
      */
     disconnect(): Promise<void>;
+
+    /**
+     * Sign a message and return the result.
+     *
+     * Message must start with 0x or UOSx
+     *
+     * @param {string} message
+     * @return {Promise<string>}
+     * @memberof UltraApi
+     */
+    signMessage(message: string): Promise<Response<{ signature: string }>>;
 }

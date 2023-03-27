@@ -60,7 +60,7 @@ export function generate(message: Omit<I.MessageRequest, 'markAsExpired' | 'nonc
     };
 
     MessageRequests.push(request);
-    return Utility.hash.sha256(JSON.stringify(request));
+    return 'UOSx' + Utility.hash.sha256(JSON.stringify(request));
 }
 
 /**
@@ -86,7 +86,7 @@ export function verify(discord: string, signature: string, publicKey: string): {
     }
 
     const originalData = MessageRequests[index];
-    const hashedData = Utility.hash.sha256(JSON.stringify(originalData));
+    const hashedData = 'UOSx' + Utility.hash.sha256(JSON.stringify(originalData));
     const didVerify = ecc.verify(signature, hashedData, publicKey);
 
     MessageRequests[index].markAsExpired = true;

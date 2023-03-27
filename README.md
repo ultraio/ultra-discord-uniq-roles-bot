@@ -42,6 +42,7 @@ Upon connecting their account to this bot it will then periodically update roles
     * What port to run the WebServer under
   * CNAME
     * Change this to a real URL, or the address of your host if deploying into production.
+
 ```sh
 DISCORD_BOT_TOKEN=
 APPLICATION_ID=
@@ -85,10 +86,12 @@ npm run start -ws
 
 ### Development
 
-Use this if you are making changes; it builds the client-side, and then starts the server-side. It is recommended
+Use this if you are making changes.
 
-HTML files are automatically built to `packages/server/dist/html`.
+Ultra Wallet requires an HTTP(s) server to work with it.
+
+This starts a Vite Server with local https, and the server without feeding the built pages through the endpoint.
 
 ```
-npm run dev -ws
+npm run dev -w packages/server
 ```
