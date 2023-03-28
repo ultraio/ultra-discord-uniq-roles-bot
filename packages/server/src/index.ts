@@ -1,8 +1,17 @@
 import * as Utility from './utility';
 import * as Services from './services';
 
+const args = process.argv;
+
 async function start() {
-    const config = Utility.config.get();
+    let config = Utility.config.get();
+    if (args.includes('--mode=dev')) {
+        Utility.log.info(`Started in Development Mode`);
+        Utility.config.set('VITE_PORT', 3102);
+        Utility.config.set('WEBSERVER_PORT', 3101);
+        config = Utility.config.get();
+    }
+
     if (!config.DISCORD_BOT_TOKEN) {
         Utility.log.error('Discord bot token was not provided');
         process.exit(1);

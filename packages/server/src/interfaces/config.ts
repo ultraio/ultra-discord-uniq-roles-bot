@@ -32,6 +32,14 @@ export default interface Config {
     WEBSERVER_PORT: number;
 
     /**
+     * Default Vite Port for dev mode
+     *
+     * @type {number}
+     * @memberof Config
+     */
+    VITE_PORT: number;
+
+    /**
      * Change this to the webserver name, or a full url if deploying to production
      *
      * @type {string}
