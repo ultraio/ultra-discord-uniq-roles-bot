@@ -1,11 +1,11 @@
 export default interface MessageRequest {
     /**
-     * When this message was created.
+     * When this message expires
      *
      * @type {number}
      * @memberof MessageRequest
      */
-    timestamp: number;
+    expiration: number;
 
     /**
      * The expected discord user.
@@ -38,4 +38,14 @@ export default interface MessageRequest {
      * @memberof MessageRequest
      */
     markAsExpired?: boolean;
+
+    /**
+     * Assigned after hashing all othe properties in this object.
+     *
+     * Omit this value to create the original hash from the data set.
+     *
+     * @type {string}
+     * @memberof MessageRequest
+     */
+    originalHash?: string;
 }

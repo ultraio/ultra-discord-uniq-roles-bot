@@ -1,7 +1,10 @@
 import path from 'path';
 import * as Utility from '../../utility';
+import { verify } from '../messageProvider';
 import express, { Express, Request, Response } from 'express';
 import { Endpoints } from '../../types/endpointEnum';
+import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const args = process.argv;
 const app: Express = express();
@@ -12,6 +15,14 @@ const staticContentPath = path.join(__dirname, '..', '..', '..', 'dist', 'html')
 // Inject any middleware here
 app.use(express.json());
 app.use(express.static(staticContentPath));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(
+    cors({
+        methods: ['GET', 'POST'],
+        allowedHeaders: ['Content-Type'],
+    })
+);
 
 /**
  * API Endpoints
@@ -26,9 +37,39 @@ if (!args.includes('--mode=dev')) {
 
 // POST endpoint - accept signed message and processes it
 app.post(Endpoints.VerifySignature, (req: Request, res: Response) => {
-    // TODO: Validate req.body
-    // TODO: Verify signed message and add to db
-    return res.status(201).json({ foo: true, data: req.body });
+    const hash: string = req.body.hash;
+    const signature: string = req.body.signature;
+    const key: string = req.body.key;
+
+    if (typeof hash === 'undefined') {
+        return res.status(400).json({ status: false, message: '"hash" property missing in post request' });
+    }
+
+    if (typeof signature === 'undefined') {
+        return res.status(400).json({ status: false, message: '"signature" property missing in post request' });
+    }
+
+    if (typeof key === 'undefined') {
+        return res.status(400).json({ status: false, message: '"key" property missing in post request' });
+    }
+
+    // If verificationData.discord exists, then it validated correctly
+    const verificationData = verify(hash, signature, key);
+    if (!verificationData || !verificationData.discord) {
+        return res.status(400).json({
+            status: false,
+            message: 'Signature failed to validate correctly, obtain a new url through Discord.',
+        });
+    }
+
+    // Successfully validated...
+    // Use the following to propagate the MongoDB database.
+    // verificationData.discord
+    // signature
+    // key -> Public EOS Key
+    //      An additional fetch will need to be made here to find the right blockchain id
+
+    return res.status(200).json({ status: true, message: 'successfully verified signatures' });
 });
 
 /**
