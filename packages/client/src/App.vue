@@ -6,6 +6,7 @@ import { Account } from './interfaces/account';
 
 import Header from './components/Header.vue';
 import Loading from './components/Loading.vue';
+import { ServerResponse } from './interfaces/serverResponse';
 
 let loading = ref(false);
 let isLinking = ref(false);
@@ -51,10 +52,45 @@ async function signAndSend() {
     }
 
     // Check Post Request Callback Here
-    console.log(`Key Used:`);
-    console.log(accountInfo.value.publicKey);
-    console.log(`Signed Message:`);
-    console.log(response.data.signature);
+    const params = {
+        key: accountInfo.value.publicKey,
+        signature: response.data.signature,
+        hash: messageToSign.value,
+    };
+
+    const postResponse: Response | undefined = await fetch(endpointCallback.value, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+    })
+        .then((res) => {
+            return res;
+        })
+        .catch((err) => {
+            console.error(err);
+            return undefined;
+        });
+
+    if (typeof postResponse === 'undefined') {
+        loading.value = false;
+        headerFormat.value = {
+            title: `Failed to Validate Signature`,
+            message: '',
+            asError: false,
+        };
+        return;
+    }
+
+    const result: ServerResponse = await postResponse.json();
+    if (!result.status) {
+        loading.value = false;
+        headerFormat.value = {
+            title: `Failed to Validate Signature`,
+            message: result.message,
+            asError: false,
+        };
+        return;
+    }
 
     // Let them know it worked...
     headerFormat.value = {

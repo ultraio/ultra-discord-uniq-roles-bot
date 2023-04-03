@@ -15,18 +15,24 @@ const args = process.argv;
 function generateSigningURL(hash: string, message: string): string {
     const config = Utility.config.get();
     const cnameHost = config.CNAME;
+    const isUsingDevMode = args.includes('--mode=dev');
 
     // localhost
     // must be https to work with wallet
-    let initialHost = `https://${cnameHost}:${args.includes('--mode=dev') ? config.VITE_PORT : config.WEBSERVER_PORT}`;
+    // however, callback needs to be http while in dev mode
+    let initialHost = `https://${cnameHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
+    let callbackHost = `https://${cnameHost}:${config.WEBSERVER_PORT}`;
 
     // cname specific with https
     if (cnameHost.includes('http') || cnameHost.includes('https')) {
         initialHost = cnameHost;
+        callbackHost = cnameHost;
     }
 
     // http://host:?port/verifySignature
-    const callback = encodeURI(initialHost + Endpoints.VerifySignature);
+    const callback = encodeURI(
+        (isUsingDevMode ? callbackHost.replace('https', 'http') : initialHost) + Endpoints.VerifySignature
+    );
 
     // http://host:?port/askToSign
     let url = initialHost + Endpoints.SignMessage;
@@ -57,7 +63,6 @@ async function handleInteraction(interaction: Interaction) {
     const originalMessage = `${interaction.user.id} is linking their blockchain id to this service. By signing this message this confirms identification`;
     const messageRequest = Services.messageProvider.generate({
         discordUser: interaction.user.id,
-        timestamp: Date.now(),
         originalMessage: originalMessage,
     });
 

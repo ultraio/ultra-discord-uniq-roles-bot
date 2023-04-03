@@ -11,10 +11,30 @@ const MessageRequests: Array<I.MessageRequest> = [];
  * Returns the index of an entry based on discord identifier.
  *
  * @param {string} discord
- * @return {*}
+ * @return {number}
  */
-function getIndex(discord: string) {
+function getIndex(discord: string): number {
     return MessageRequests.findIndex((x) => x.discordUser === discord);
+}
+
+/**
+ * Return the index that belongs to a specific hash.
+ *
+ * @param {string} hash
+ * @return {number}
+ */
+function getIndexByHash(hash: string): number {
+    return MessageRequests.findIndex((x) => x.originalHash && x.originalHash === hash);
+}
+
+/**
+ * Generate a hash based on data for signing.
+ *
+ * @param {string} data
+ * @return {string}
+ */
+function getHash(data: string): string {
+    return 'UOSx' + Utility.hash.sha256(data);
 }
 
 /**
@@ -22,9 +42,10 @@ function getIndex(discord: string) {
  */
 function removeExpiredEntries() {
     let count = 0;
+    const currentTime = Date.now();
 
     for (let i = MessageRequests.length - 1; i >= 0; i--) {
-        if (MessageRequests[i].timestamp + EXPIRATION_TIME_IN_MS < Date.now() && !MessageRequests[i].markAsExpired) {
+        if (currentTime < MessageRequests[i].expiration && !MessageRequests[i].markAsExpired) {
             continue;
         }
 
@@ -46,7 +67,9 @@ function removeExpiredEntries() {
  * @param {I.MessageRequest} message
  * @return {undefined | string}
  */
-export function generate(message: Omit<I.MessageRequest, 'markAsExpired' | 'nonce'>): string | undefined {
+export function generate(
+    message: Omit<I.MessageRequest, 'markAsExpired' | 'nonce' | 'expiration'>
+): string | undefined {
     removeExpiredEntries();
 
     const index = getIndex(message.discordUser);
@@ -56,41 +79,73 @@ export function generate(message: Omit<I.MessageRequest, 'markAsExpired' | 'nonc
 
     const request: I.MessageRequest = {
         ...message,
+        expiration: Date.now() + EXPIRATION_TIME_IN_MS,
         nonce: rng.random_int(),
+        markAsExpired: false,
     };
 
+    const originalHash = getHash(JSON.stringify(request));
+    request.originalHash = originalHash;
     MessageRequests.push(request);
-    return 'UOSx' + Utility.hash.sha256(JSON.stringify(request));
+    return originalHash;
 }
 
 /**
  * When verifying an entry, it automatically removes expired entries.
  *
- * Pass a discord id for lookup, a signature to verify against, and the public key used for the signature.
+ * Pass the original hash for lookup, a signature to verify against, and the public key used for the signature.
  *
  * If everything passes; a response will be given.
  *
  * If the verification attempt fails it automatically marks the entry to be removed, and removes it.
  *
  * @export
- * @param {string} discord
+ * @param {string} hash The original hash passed to the client
  * @param {string} signedMessage
- * @return {{ message: string; status: boolean }}
+ * @param {string} publicKey
+ * @return {{ response: { message: string; status: boolean }; discord?: string }}
  */
-export function verify(discord: string, signature: string, publicKey: string): { message: string; status: boolean } {
+export function verify(
+    hash: string,
+    signature: string,
+    publicKey: string
+): { response: { message: string; status: boolean }; discord?: string } {
     removeExpiredEntries();
 
-    const index = getIndex(discord);
+    const index = getIndexByHash(hash);
     if (index <= -1) {
-        return { message: 'Failed to find linking request.', status: false };
+        return {
+            response: {
+                message: 'failed to find linking request',
+                status: false,
+            },
+        };
     }
 
-    const originalData = MessageRequests[index];
-    const hashedData = 'UOSx' + Utility.hash.sha256(JSON.stringify(originalData));
-    const didVerify = ecc.verify(signature, hashedData, publicKey);
+    const linkingRequest = MessageRequests[index];
 
+    if (typeof linkingRequest.originalHash === 'undefined') {
+        return {
+            response: {
+                message: 'failed to find linking request',
+                status: false,
+            },
+        };
+    }
+
+    let didVerify = false;
+
+    try {
+        didVerify = ecc.verify(signature, linkingRequest.originalHash, publicKey);
+    } catch (err) {
+        console.error(err);
+    }
+
+    const discord = MessageRequests[index].discordUser;
     MessageRequests[index].markAsExpired = true;
     removeExpiredEntries();
 
-    return didVerify ? { status: true, message: 'verified' } : { status: false, message: 'failed to verify signature' };
+    return didVerify
+        ? { response: { status: true, message: 'verified' }, discord }
+        : { response: { status: false, message: 'failed to verify signature' } };
 }
