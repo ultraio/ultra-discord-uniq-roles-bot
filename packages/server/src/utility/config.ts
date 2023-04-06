@@ -8,6 +8,7 @@ let defaultConfig: I.Config = {
     DISCORD_BOT_TOKEN: undefined,
     WEBSERVER_PORT: 3000,
     VITE_PORT: 3102,
+    MONGODB_URL: 'mongodb://0.0.0.0:27017',
 };
 
 /**

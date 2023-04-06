@@ -46,4 +46,12 @@ export default interface Config {
      * @memberof Config
      */
     CNAME: string;
+
+    /**
+     * MongoDB connection string
+     *
+     * @type {string}
+     * @memberof Config
+     */
+    MONGODB_URL: string;
 }
