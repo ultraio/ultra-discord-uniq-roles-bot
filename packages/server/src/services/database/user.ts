@@ -1,5 +1,4 @@
 import * as shared from './shared';
-import * as utility from '../../utility';
 import * as I from '../../interfaces';
 
 import { DiscordUser, dDiscordUser } from 'interfaces/database';
@@ -42,6 +41,34 @@ export async function addUser(
     }
 
     return { status: true, data: 'added user' };
+}
+
+/**
+ * Remove a discord user from the database
+ *
+ * @export
+ * @param {string} discord
+ * @return {Promise<I.Response<string>>}
+ */
+export async function removeUser(discord: string): Promise<I.Response<string>> {
+    const discordUserDocument = await getUser(discord);
+    if (discordUserDocument.status === false) {
+        return { status: false, data: 'discord user does not exist in the database' };
+    }
+
+    const db = await shared.getDatabase();
+    if (typeof db === 'undefined') {
+        return { status: false, data: 'database could not be found' };
+    }
+
+    if (typeof discordUserDocument.data === 'string') {
+        return { status: false, data: 'discord user does not exist in the database' };
+    }
+
+    const collection = db.collection<DiscordUser>(COLLECTION_NAME);
+    await collection.deleteOne({ _id: discordUserDocument.data._id });
+
+    return { status: true, data: 'discord user removed' };
 }
 
 /**
