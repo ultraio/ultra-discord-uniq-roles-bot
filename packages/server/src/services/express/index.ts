@@ -1,10 +1,13 @@
 import path from 'path';
-import * as Utility from '../../utility';
-import { verify } from '../messageProvider';
 import express, { Express, Request, Response } from 'express';
-import { Endpoints } from '../../types/endpointEnum';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+
+import { verify } from '../messageProvider';
+import { Endpoints } from '../../types/endpointEnum';
+import * as Utility from '../../utility';
+import { user as UserDb } from '../database';
+import * as Blockchain from '../blockchain';
 
 const args = process.argv;
 const app: Express = express();
@@ -36,7 +39,7 @@ if (!args.includes('--mode=dev')) {
 }
 
 // POST endpoint - accept signed message and processes it
-app.post(Endpoints.VerifySignature, (req: Request, res: Response) => {
+app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
     const hash: string = req.body.hash;
     const signature: string = req.body.signature;
     const key: string = req.body.key;
@@ -62,12 +65,25 @@ app.post(Endpoints.VerifySignature, (req: Request, res: Response) => {
         });
     }
 
-    // Successfully validated...
-    // Use the following to propagate the MongoDB database.
-    // verificationData.discord
-    // signature
-    // key -> Public EOS Key
-    //      An additional fetch will need to be made here to find the right blockchain id
+    const accounts = await Blockchain.getAccountsByKey(key);
+    if (accounts.length <= 0) {
+        return res.status(400).json({
+            status: false,
+            message: 'No blockchain accounts exist for the provided public key.',
+        });
+    }
+
+    const blockchainid = accounts[0];
+    const didAddUser = await UserDb.addUser(verificationData.discord, blockchainid, signature);
+    if (!didAddUser.status) {
+        return res.status(400).json({
+            status: false,
+            message: didAddUser.data,
+        });
+    }
+
+    // ! - Todo
+    // Add Role Refreshing Logic Here
 
     return res.status(200).json({ status: true, message: 'successfully verified signatures' });
 });

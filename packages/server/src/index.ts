@@ -28,6 +28,12 @@ async function start() {
         Utility.log.error('Express service could not be started.');
         process.exit(1);
     }
+
+    isRunning = await Services.database.shared.init();
+    if (!isRunning) {
+        Utility.log.error('Database service could not be started.');
+        process.exit(1);
+    }
 }
 
 start();
