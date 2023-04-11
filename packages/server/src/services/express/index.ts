@@ -6,7 +6,7 @@ import cors from 'cors';
 import { verify } from '../messageProvider';
 import { Endpoints } from '../../types/endpointEnum';
 import * as Utility from '../../utility';
-import * as UserDb from '../database/user';
+import { user as UserDb } from '../database';
 import * as Blockchain from '../blockchain';
 
 const args = process.argv;

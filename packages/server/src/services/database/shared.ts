@@ -25,7 +25,7 @@ export async function init(): Promise<boolean> {
     }
 
     isInitialized = true;
-    Utility.log.info('Connect to Database');
+    Utility.log.info('Connected to Database');
     return true;
 }
 
