@@ -1,4 +1,4 @@
-import { Api, JsonRpc, RpcError } from 'enf-eosjs';
+import { Api, JsonRpc } from 'enf-eosjs';
 import { JsSignatureProvider } from 'enf-eosjs/dist/eosjs-jssig';
 import { TextEncoder, TextDecoder } from 'text-encoding';
 import crossFetch from 'cross-fetch';

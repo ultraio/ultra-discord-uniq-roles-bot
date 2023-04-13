@@ -3,11 +3,9 @@ import express, { Express, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 
-import { verify } from '../messageProvider';
 import { Endpoints } from '../../types/endpointEnum';
 import * as Utility from '../../utility';
-import { user as UserDb } from '../database';
-import * as Blockchain from '../blockchain';
+import * as Services from '..';
 
 const args = process.argv;
 const app: Express = express();
@@ -57,7 +55,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
     }
 
     // If verificationData.discord exists, then it validated correctly
-    const verificationData = verify(hash, signature, key);
+    const verificationData = Services.messageProvider.verify(hash, signature, key);
     if (!verificationData || !verificationData.discord) {
         return res.status(400).json({
             status: false,
@@ -65,7 +63,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
         });
     }
 
-    const accounts = await Blockchain.getAccountsByKey(key);
+    const accounts = await Services.blockchain.getAccountsByKey(key);
     if (accounts.length <= 0) {
         return res.status(400).json({
             status: false,
@@ -74,7 +72,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
     }
 
     const blockchainid = accounts[0];
-    const didAddUser = await UserDb.addUser(verificationData.discord, blockchainid, signature);
+    const didAddUser = await Services.database.user.addUser(verificationData.discord, blockchainid, signature);
     if (!didAddUser.status) {
         return res.status(400).json({
             status: false,
@@ -82,9 +80,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
         });
     }
 
-    // ! - Todo
-    // Add Role Refreshing Logic Here
-
+    await Services.users.refreshUser(verificationData.discord, blockchainid);
     return res.status(200).json({ status: true, message: 'successfully verified signatures' });
 });
 

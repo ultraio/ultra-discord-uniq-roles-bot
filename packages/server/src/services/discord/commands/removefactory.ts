@@ -1,6 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import * as Services from '../..';
-import { factory as factoryDb } from '../../database';
 import { dTokenFactory } from 'interfaces/database';
 
 const commandName = 'rmvfactory';
@@ -38,7 +37,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     try {
         // Remove tokenFactory from db
-        const resp = await factoryDb.removeFactory(factoryId);
+        const resp = await Services.database.factory.removeFactory(factoryId);
         if (!resp.status) {
             return interaction.editReply({
                 content: `⚠️ Error: ${resp.data}`,
