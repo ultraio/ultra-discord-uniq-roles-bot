@@ -38,13 +38,13 @@ export async function addFactory(factory: number, discordRole: string): Promise<
 }
 
 /**
- * Remove a token factory based on id
+ * Remove a token factory based on id, returns the factory object that was removed
  *
  * @export
  * @param {number} factory
- * @return {Promise<I.Response<string>>}
+ * @return {Promise<I.Response<dTokenFactory | string>>}
  */
-export async function removeFactory(factory: number): Promise<I.Response<string>> {
+export async function removeFactory(factory: number): Promise<I.Response<dTokenFactory | string>> {
     const factoryDocument = await getFactory(factory);
     if (factoryDocument.status === false) {
         return { status: false, data: 'factory does not exist in the database' };
@@ -62,7 +62,7 @@ export async function removeFactory(factory: number): Promise<I.Response<string>
     const collection = db.collection<TokenFactory>(COLLECTION_NAME);
     await collection.deleteOne({ _id: factoryDocument.data._id });
 
-    return { status: true, data: 'factory removed' };
+    return { status: true, data: factoryDocument.data };
 }
 
 /**
