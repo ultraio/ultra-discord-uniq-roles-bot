@@ -74,6 +74,14 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
             });
         }
 
+        // Check if role is already assigned to another factory
+        const roleInDb = await factoryDb.getFactoryByRole(role.id);
+        if (roleInDb.status) {
+            return interaction.editReply({
+                content: `⚠️ Error: Role ${role.name} is already associated with Factory: ${factoryId}.`,
+            });
+        }
+
         // Check if factory exists on chain
         const factoryOnChain = await getFactoryOnChain(factoryId);
         if (!factoryOnChain) {
