@@ -2,6 +2,7 @@ import * as I from '../../interfaces';
 import * as Utility from '../../utility';
 import { updateAllCommands } from './update';
 import {
+    ChatInputCommandInteraction,
     Client,
     Guild,
     GuildMember,
@@ -10,13 +11,19 @@ import {
     SlashCommandBuilder,
 } from 'discord.js';
 
-type InteractionCallback = (interaction: Interaction) => Promise<unknown>;
+type InteractionCallback = (interaction: Interaction) => Promise<any>;
+type ChatInputCommandInteractionCallback = (interaction: ChatInputCommandInteraction) => Promise<any>;
 
 const client: Client = new Client({
     intents: ['Guilds', 'GuildMessages', 'GuildMembers'],
 });
 
-const commands: { [name: string]: { original: SlashCommandBuilder; callback: InteractionCallback } } = {};
+const commands: {
+    [name: string]: {
+        original: SlashCommandBuilder;
+        callback: InteractionCallback | ChatInputCommandInteractionCallback;
+    };
+} = {};
 
 /**
  * Handles slash command interactions.
@@ -36,6 +43,7 @@ async function handleInteraction(interaction: Interaction) {
     try {
         await existingCommand.callback(interaction);
     } catch (err) {
+        Utility.log.warn(`Error while executing command ${existingCommand.original.name}: ${err}`);
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({
                 //
@@ -59,7 +67,10 @@ async function handleInteraction(interaction: Interaction) {
  * @param {SlashCommandBuilder} name
  * @param {(interaction: Interaction) => void} callback
  */
-export function register(command: SlashCommandBuilder, callback: InteractionCallback) {
+export function register(
+    command: SlashCommandBuilder,
+    callback: InteractionCallback | ChatInputCommandInteractionCallback
+) {
     Utility.log.info(`Added Command: ${command.name}`);
     commands[command.name] = {
         original: command,
@@ -127,7 +138,8 @@ export async function init(token: string): Promise<boolean> {
             client.off('error', handleError);
             client.on('interactionCreate', handleInteraction);
 
-            await import('./commands').catch(() => {
+            await import('./commands').catch((err) => {
+                Utility.log.error(`Error: ${err}`);
                 Utility.log.error(`Could not find commands to import.`);
             });
 
