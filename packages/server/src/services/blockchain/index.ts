@@ -69,3 +69,39 @@ export function getTableData(
             return null;
         });
 }
+
+/**
+ * This function retrieves all data from a specified table in a blockchain and returns it as an array.
+ *
+ * This recursively calls itself until all data is returned.
+ *
+ * @param {string} code The contract to call
+ * @param {string} scope The scope of the table
+ * @param {string} table The name of the table
+ * @param {number | null} [lower_bound=null] Used to identify where to fetch rows from a table.
+ * @returns An array of objects which can be specified as a generic type.
+ */
+export async function getAllTableData<T = Object>(
+    code: string,
+    scope: string,
+    table: string,
+    lower_bound: number | null = null
+): Promise<T[]> {
+    let rows: any[] = [];
+    let data = await api.rpc.get_table_rows({ code, scope, table, json: true, lower_bound }).catch((err) => {
+        console.log(err);
+        return undefined;
+    });
+
+    if (typeof data === 'undefined' || !data.rows) {
+        return [];
+    }
+
+    rows = rows.concat(data.rows);
+    if (data.more) {
+        const newRows = await getAllTableData<T>(code, scope, table, data.next_key);
+        rows = rows.concat(newRows);
+    }
+
+    return rows;
+}
