@@ -34,6 +34,12 @@ async function start() {
         Utility.log.error('Database service could not be started.');
         process.exit(1);
     }
+
+    isRunning = Services.users.init();
+    if (!isRunning) {
+        Utility.log.error('User update service could not be started.');
+        process.exit(1);
+    }
 }
 
 start();

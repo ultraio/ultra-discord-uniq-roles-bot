@@ -1,4 +1,4 @@
-import { Interaction, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Interaction, SlashCommandBuilder } from 'discord.js';
 import { Endpoints } from '../../../types/endpointEnum';
 import * as Services from '../..';
 import * as Utility from '../../../utility';
@@ -74,9 +74,12 @@ async function handleInteraction(interaction: Interaction) {
     }
 
     const encodedUrl = generateSigningURL(messageRequest, originalMessage);
+    const button = new ButtonBuilder().setLabel('Open Link').setURL(encodedUrl).setStyle(ButtonStyle.Link);
+
     return interaction.reply({
-        content: `Follow the URL to continue your linking process: ${encodedUrl}`,
+        content: `Click the button to begin linking Discord to Ultra Blockchain.`,
         ephemeral: true, // Makes responses 'only you can see this'
+        components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)],
     });
 }
 

@@ -15,7 +15,7 @@ type InteractionCallback = (interaction: Interaction) => Promise<any>;
 type ChatInputCommandInteractionCallback = (interaction: ChatInputCommandInteraction) => Promise<any>;
 
 const client: Client = new Client({
-    intents: ['Guilds', 'GuildMessages', 'GuildMembers'],
+    intents: ['Guilds', 'GuildMessages', 'GuildMembers', 'GuildModeration'],
 });
 
 const commands: {
@@ -106,13 +106,37 @@ export function getGuild(): Guild | undefined {
  * @param {string} id
  * @return {(GuildMember | undefined)}
  */
-export function getMember(id: string): GuildMember | undefined {
+export async function getMember(id: string): Promise<GuildMember | undefined> {
     const guild = getGuild();
     if (typeof guild === 'undefined') {
         return undefined;
     }
 
-    return guild.members.cache.get(id);
+    return await guild.members.fetch({ user: id });
+}
+
+/**
+ * Get member roles.
+ *
+ * Returns undefined if not found.
+ *
+ * @export
+ * @param {string} discord
+ * @return {Promise<string[]>}
+ */
+export async function getMemberAndRoles(
+    discord: string
+): Promise<{ member: GuildMember; roles: string[] } | undefined> {
+    const member = await getMember(discord);
+    if (typeof member === 'undefined') {
+        return undefined;
+    }
+
+    const roles = member.roles.cache.map((role) => {
+        return role.id;
+    });
+
+    return { member, roles };
 }
 
 /**

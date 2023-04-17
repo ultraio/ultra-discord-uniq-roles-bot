@@ -2,6 +2,7 @@ import * as shared from './shared';
 import * as I from '../../interfaces';
 
 import { DiscordUser, dDiscordUser } from 'interfaces/database';
+import { Collection } from '@discordjs/collection';
 
 const COLLECTION_NAME = 'users';
 
@@ -100,4 +101,8 @@ export async function getUser(
     }
 
     return { status: true, data: user };
+}
+
+export function getCollectionName() {
+    return COLLECTION_NAME;
 }
