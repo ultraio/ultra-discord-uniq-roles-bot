@@ -45,13 +45,13 @@ export async function addUser(
 }
 
 /**
- * Remove a discord user from the database
+ * Remove a discord user from the database, returns the user object that was removed
  *
  * @export
  * @param {string} discord
  * @return {Promise<I.Response<string>>}
  */
-export async function removeUser(discord: string): Promise<I.Response<string>> {
+export async function removeUser(discord: string): Promise<I.Response<dDiscordUser | string>> {
     const discordUserDocument = await getUser(discord);
     if (discordUserDocument.status === false) {
         return { status: false, data: 'discord user does not exist in the database' };
@@ -69,7 +69,7 @@ export async function removeUser(discord: string): Promise<I.Response<string>> {
     const collection = db.collection<DiscordUser>(COLLECTION_NAME);
     await collection.deleteOne({ _id: discordUserDocument.data._id });
 
-    return { status: true, data: 'discord user removed' };
+    return { status: true, data: discordUserDocument.data };
 }
 
 /**
@@ -92,7 +92,13 @@ export async function getUser(
     }
 
     const collection = db.collection(COLLECTION_NAME);
-    const user = await collection.findOne<dDiscordUser>({ $or: [{ discord, blockchain }] }).catch((err) => {
+
+    const queryParams = { discord } as any;
+    if (blockchain) {
+        queryParams.blockchain = blockchain;
+    }
+
+    const user = await collection.findOne<dDiscordUser>({ $or: [queryParams] }).catch((err) => {
         return null;
     });
 
