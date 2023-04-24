@@ -8,6 +8,10 @@ Upon connecting their account to this bot it will then periodically update roles
 
 [Read More...](./docs/Summary.md)
 
+[Read About Client...](./packages/client/README.md)
+
+[Read About Server...](./packages/server/README.md)
+
 <br />
 
 ## ⚙️ Prerequisites
