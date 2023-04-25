@@ -91,7 +91,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
  * @param {number} port
  * @return {Promise<boolean>}
  */
-export async function init(port: number): Promise<boolean> {
+export async function init(port: number | string): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
         app.listen(port, () => {
             Utility.log.info(`[Express]: Server is running at http://localhost:${port}`);
