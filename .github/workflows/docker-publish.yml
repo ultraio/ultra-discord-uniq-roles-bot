@@ -3,7 +3,7 @@ name: docker-publish-ci
 on:
   push:
     branches:
-      - 'BLOCK-1098-dockerize'
+      - 'main'
 
 jobs:
   build:
