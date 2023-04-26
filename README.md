@@ -84,3 +84,19 @@ This starts a Vite Server with local https, and the server without feeding the b
 ```
 npm run dev -w packages/server
 ```
+
+## Docker
+
+These are general purpose docker instructions based off this repository.
+
+Start by adding your `.env` file to `packages/server/.env`
+
+Run the following to start the bot.
+
+```
+docker build -t uniqbot .
+```
+
+```
+docker compose up
+```
