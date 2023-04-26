@@ -4,11 +4,13 @@ import dotenv from 'dotenv';
 const dotEnvConfig = dotenv.config();
 let isInit = false;
 let defaultConfig: I.Config = {
-    CNAME: 'localhost',
-    DISCORD_BOT_TOKEN: undefined,
-    WEBSERVER_PORT: 3000,
+    CNAME: process.env.CNAME || 'localhost',
+    DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
+    APPLICATION_ID: process.env.APPLICATION_ID,
+    GUILD_ID: process.env.GUILD_ID,
+    WEBSERVER_PORT: process.env.WEBSERVER_PORT || 3000,
     VITE_PORT: 3102,
-    MONGODB_URL: 'mongodb://0.0.0.0:27017',
+    MONGODB_URL: process.env.MONGODB_URL || 'mongodb://0.0.0.0:27017',
 };
 
 /**

@@ -29,7 +29,7 @@ export default interface Config {
      * @type {number}
      * @memberof Config
      */
-    WEBSERVER_PORT: number;
+    WEBSERVER_PORT: number | string;
 
     /**
      * Default Vite Port for dev mode
