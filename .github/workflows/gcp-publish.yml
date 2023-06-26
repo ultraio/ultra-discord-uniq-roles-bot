@@ -24,21 +24,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Set Release Version Variable (Tagged from CLI)
-              if: ${{ github.event.inputs.version == '' }}
               run: |
                   echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-            - name: Set Release Version Variable (Workflow GUI)
-              if: ${{ github.event.inputs.version != 'default-value' && github.event.inputs.version != '' }}
-              run: |
-                  echo "RELEASE_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-
+ 
             - name: 'Clone'
               uses: actions/checkout@v2
               with:
-                  repository: 'ultraio/ultra-discord-uniq-roles-bot'
-                  token: '${{ secrets.BLOCKCHAIN_CI_SECRET }}'
-                  path: '.'
                   submodules: 'recursive'
                   ref: '${{ env.RELEASE_VERSION }}'
                   fetch-depth: 0
