@@ -1,17 +1,24 @@
-FROM node:16
+FROM node:lts-alpine3.16 as build-env
 
-# Create app directory
-WORKDIR /usr/src/app
+WORKDIR /app
+
+# Add required files
+ADD packages /app/packages
+ADD package.json /app/package.json
+ADD package-lock.json /app/package-lock.json
 
 # Install app dependencies
-COPY package*.json ./
-RUN npm ci
+RUN npm install
+RUN npm run build -ws
 
-# Bundle app source
-COPY . .
+
+FROM node:lts-alpine3.16
+
+WORKDIR /app
+COPY --from=build-env /app/node_modules /app/node_modules
+COPY --from=build-env /app/packages/server/dist /app/dist
 
 # Expose express server port
 EXPOSE 3000
 
-# start the service
-CMD bash -c "npm run start -ws"
+ENTRYPOINT [ "node", "dist/index.js" ]
