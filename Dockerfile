@@ -13,8 +13,5 @@ COPY . .
 # Expose express server port
 EXPOSE 3000
 
-# Healthcheck enabled to show container health/status in docker ps
-HEALTHCHECK CMD curl --fail http://localhost:3000 || exit 1  
-
 # start the service
 CMD bash -c "npm run start -ws"
