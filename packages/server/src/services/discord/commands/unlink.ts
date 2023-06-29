@@ -3,7 +3,7 @@ import { Token } from '../../../interfaces/';
 import * as Services from '../..';
 
 const commandName = 'unlink';
-const commandDescription = 'Unlink your blockchain ID to your discord account';
+const commandDescription = 'Unlink your blockchain id from the uniq bot';
 const command = new SlashCommandBuilder().setName(commandName).setDescription(commandDescription);
 
 /**
@@ -67,7 +67,7 @@ async function handleInteraction(interaction: Interaction) {
 
     if (!interaction.member) {
         return interaction.reply({
-            content: 'Could not find user in Discord Guild.',
+            content: 'Could not find user in ultra guild.',
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }

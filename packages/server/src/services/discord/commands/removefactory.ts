@@ -3,7 +3,7 @@ import * as Services from '../..';
 import { dTokenFactory } from 'interfaces/database';
 
 const commandName = 'rmvfactory';
-const commandDescription = 'Allows an admin to remove a factory id and its corresponding discord role';
+const commandDescription = 'Allows an admin to remove a factory id and its corresponding role';
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
@@ -19,7 +19,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     if (!interaction.member) {
         return interaction.reply({
-            content: 'Could not find user in Discord Guild.',
+            content: 'Could not find user in ultra server.',
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }

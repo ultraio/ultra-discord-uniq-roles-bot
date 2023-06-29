@@ -2,14 +2,14 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, 
 import * as Services from '../..';
 
 const commandName = 'addfactory';
-const commandDescription = 'Allows an admin to bind a factory id to a discord role';
+const commandDescription = 'Allows an admin to bind a factory id to a role';
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
     .addIntegerOption((option) =>
         option.setName('factory_id').setDescription('The on-chain factory ID').setRequired(true)
     )
-    .addRoleOption((option) => option.setName('role').setDescription('The discord role').setRequired(true))
+    .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 /**
@@ -53,7 +53,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     if (!interaction.member) {
         return interaction.reply({
-            content: 'Could not find user in Discord Guild.',
+            content: 'Could not find user in ultra server.',
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }

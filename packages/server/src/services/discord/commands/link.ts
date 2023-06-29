@@ -4,7 +4,7 @@ import * as Services from '../..';
 import * as Utility from '../../../utility';
 
 const commandName = 'link';
-const commandDescription = 'Link your Discord ID to an Ultra Blockchain ID';
+const commandDescription = 'Link up with your Ultra Blockchain ID';
 const command = new SlashCommandBuilder().setName(commandName).setDescription(commandDescription);
 const args = process.argv;
 
@@ -55,7 +55,7 @@ async function handleInteraction(interaction: Interaction) {
 
     if (!interaction.member) {
         return interaction.reply({
-            content: 'Could not find user in Discord Guild.',
+            content: 'Could not find user in ultra server.',
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }
@@ -77,7 +77,7 @@ async function handleInteraction(interaction: Interaction) {
     const button = new ButtonBuilder().setLabel('Open Link').setURL(encodedUrl).setStyle(ButtonStyle.Link);
 
     return interaction.reply({
-        content: `Click the button to begin linking Discord to Ultra Blockchain.`,
+        content: `Click the button to begin linking to Ultra Blockchain.`,
         ephemeral: true, // Makes responses 'only you can see this'
         components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)],
     });
