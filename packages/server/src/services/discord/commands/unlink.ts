@@ -63,7 +63,7 @@ async function handleInteraction(interaction: Interaction) {
         }
 
         // Remove all roles from this user
-        const resp = await removeFactoryRoles(userInDb.data.discord, userInDb.data.blockchain);
+        const resp = await removeFactoryRoles(userInDb.data.discord);
 
         if (!resp.status) {
             return interaction.editReply({
