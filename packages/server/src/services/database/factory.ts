@@ -2,7 +2,7 @@ import * as shared from './shared';
 import * as I from '../../interfaces';
 import { Role, dRole } from 'interfaces/database';
 
-const COLLECTION_NAME = 'factories';
+const COLLECTION_NAME = 'roles';
 
 /**
  * Add a factory to a role.
