@@ -74,12 +74,6 @@ export interface dRole extends Document {
      * @memberof dRole
      */
     role: string;
-
-    /**
-     * Flag to specify is this role is a custom role.
-     * Custom roles are managed by this service.
-     */
-    isManaged: boolean;
 }
 
 /**

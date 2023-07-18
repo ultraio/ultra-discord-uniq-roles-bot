@@ -17,21 +17,17 @@ async function removeFactoryRoles(discordId: string): Promise<{ status: boolean;
         return { status: false, data: 'Could not find discord user' };
     }
 
-    // Loop through each role, and check if it's a factory role (managed role) and remove it
+    // Loop through each role, and check if it's a factory role and remove it
     for (let role of userData.roles) {
         const response = await Services.database.factory.getFactoriesByRole(role);
 
         // If record not found, then this role is not a factory role - don't remove
+        // We only keep factory roles in the db.
         if (!response.status || typeof response.data === 'string') {
             continue;
         }
 
-        // If record is found, but the role is non managed, don't remove it
-        if (!response.data.isManaged) {
-            continue;
-        }
-
-        // If it's a managed role, remove the role from the user
+        // If it's a factory role, remove the role from the user
         await userData.member.roles.remove(role, 'Unlinking blockchain ID');
     }
     return { status: true, data: 'Roles removed successfully' };

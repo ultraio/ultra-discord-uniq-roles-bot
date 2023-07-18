@@ -39,17 +39,12 @@ export async function refreshUser(discord: string, blockchainId: string) {
     let amountAdded = 0;
     let amountRemoved = 0;
 
-    // Loop through each role, and check if it's a factory role (managed role)
+    // Loop through each role, and check if it's a factory role
     for (let role of userData?.roles) {
         const response = await factory.getFactoriesByRole(role);
 
         // If record not found, then this role is not a factory role - don't remove
         if (!response || !response.status || typeof response.data === 'string') {
-            continue;
-        }
-
-        // If record is found, but the role is non managed, don't remove it
-        if (!response.data.isManaged) {
             continue;
         }
 

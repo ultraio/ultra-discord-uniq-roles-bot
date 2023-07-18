@@ -28,7 +28,7 @@ export async function addFactory(factory: number, discordRole: string): Promise<
     const result = await collection
         .findOneAndUpdate(
             { role: discordRole }, // query filter
-            { $set: { role: discordRole, isManaged: true }, $push: { factories: factory } }, // data to update
+            { $set: { role: discordRole }, $push: { factories: factory } }, // data to update
             { upsert: true }
         )
         .catch((err) => {
