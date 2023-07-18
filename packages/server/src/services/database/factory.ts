@@ -1,12 +1,12 @@
 import * as shared from './shared';
 import * as I from '../../interfaces';
-
-import { TokenFactory, dTokenFactory } from 'interfaces/database';
+import { Role, dRole } from 'interfaces/database';
 
 const COLLECTION_NAME = 'factories';
 
 /**
- * Add a factory with a discord role to the database.
+ * Add a factory to a role.
+ * If the role doesn't exists, a new document is created.
  *
  * @export
  * @param {number} factory
@@ -24,13 +24,19 @@ export async function addFactory(factory: number, discordRole: string): Promise<
         return { status: false, data: 'database could not be found' };
     }
 
-    const collection = db.collection<TokenFactory>(COLLECTION_NAME);
-    const result = await collection.insertOne({ factory, role: discordRole }).catch((err) => {
-        console.error(err);
-        return undefined;
-    });
+    const collection = db.collection<Role>(COLLECTION_NAME);
+    const result = await collection
+        .findOneAndUpdate(
+            { role: discordRole }, // query filter
+            { $set: { role: discordRole, isManaged: true }, $push: { factories: factory } }, // data to update
+            { upsert: true }
+        )
+        .catch((err) => {
+            console.error(err);
+            return undefined;
+        });
 
-    if (!result || !result.acknowledged) {
+    if (!result || !result.ok) {
         return { status: false, data: 'could not add factory' };
     }
 
@@ -38,13 +44,13 @@ export async function addFactory(factory: number, discordRole: string): Promise<
 }
 
 /**
- * Remove a token factory based on id, returns the factory object that was removed
+ * Removes a token factory from a role. Returns the role object that was updated
  *
  * @export
  * @param {number} factory
- * @return {Promise<I.Response<dTokenFactory | string>>}
+ * @return {Promise<I.Response<dRole | string>>}
  */
-export async function removeFactory(factory: number): Promise<I.Response<dTokenFactory | string>> {
+export async function removeFactory(factory: number): Promise<I.Response<dRole | string>> {
     const factoryDocument = await getFactory(factory);
     if (factoryDocument.status === false) {
         return { status: false, data: 'factory does not exist in the database' };
@@ -59,27 +65,29 @@ export async function removeFactory(factory: number): Promise<I.Response<dTokenF
         return { status: false, data: 'factory does not exist in the database' };
     }
 
-    const collection = db.collection<TokenFactory>(COLLECTION_NAME);
-    await collection.deleteOne({ _id: factoryDocument.data._id });
+    // Delete factoryId from the role object
+    const collection = db.collection<Role>(COLLECTION_NAME);
+    await collection.updateOne({ _id: factoryDocument.data._id }, { $pull: { factories: factory } });
 
     return { status: true, data: factoryDocument.data };
 }
 
 /**
- * Return a matching factory based on factory id.
+ * Checks if a factory id exists in the database.
+ * Returns the associated role object, if found.
  *
  * @export
  * @param {number} factory
- * @return {(Promise<I.Response<dTokenFactory | string>>)}
+ * @return {(Promise<I.Response<dRole | string>>)}
  */
-export async function getFactory(factory: number): Promise<I.Response<dTokenFactory | string>> {
+export async function getFactory(factory: number): Promise<I.Response<dRole | string>> {
     const db = await shared.getDatabase();
     if (typeof db === 'undefined') {
         return { status: false, data: 'database could not be found' };
     }
 
     const collection = db.collection(COLLECTION_NAME);
-    const factoryDocument = await collection.findOne<dTokenFactory>({ factory }).catch((err) => {
+    const factoryDocument = await collection.findOne<dRole>({ factories: factory }).catch((err) => {
         return null;
     });
 
@@ -91,20 +99,20 @@ export async function getFactory(factory: number): Promise<I.Response<dTokenFact
 }
 
 /**
- * Return a matching factory based on role id.
+ * Returns associated factories based on role id.
  *
  * @export
  * @param {string | number} role
- * @return {(Promise<I.Response<dTokenFactory | string>>)}
+ * @return {(Promise<I.Response<dRole | string>>)}
  */
-export async function getFactoryByRole(role: number | string): Promise<I.Response<dTokenFactory | string>> {
+export async function getFactoriesByRole(role: number | string): Promise<I.Response<dRole | string>> {
     const db = await shared.getDatabase();
     if (typeof db === 'undefined') {
         return { status: false, data: 'database could not be found' };
     }
 
     const collection = db.collection(COLLECTION_NAME);
-    const factoryDocument = await collection.findOne<dTokenFactory>({ role }).catch((err) => {
+    const factoryDocument = await collection.findOne<dRole>({ role }).catch((err) => {
         return null;
     });
 

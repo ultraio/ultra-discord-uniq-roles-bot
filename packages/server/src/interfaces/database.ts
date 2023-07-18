@@ -47,33 +47,39 @@ export interface dDiscordUser extends Document {
 }
 
 /**
- * A token factory schema that has not been pushed to the Databse.
+ * A role schema that has not been pushed to the Database.
  */
-export type TokenFactory = Omit<dTokenFactory, '_id'>;
+export type Role = Omit<dRole, '_id'>;
 
 /**
- * A token factory schema that is pulled from the database.
+ * A role schema that is pulled from the database.
  *
  * @export
- * @interface TokenFactory
+ * @interface Role
  * @extends {Document}
  */
-export interface dTokenFactory extends Document {
+export interface dRole extends Document {
     /**
-     * Factory associated with this document.
+     * Factories associated with this role.
      *
-     * @type {number}
-     * @memberof dTokenFactory
+     * @type {Array<number>}
+     * @memberof dRole
      */
-    factory: number;
+    factories: Array<number>;
 
     /**
-     * The role associated with this document.
+     * The role id for this role.
      *
      * @type {string}
-     * @memberof dTokenFactory
+     * @memberof dRole
      */
     role: string;
+
+    /**
+     * Flag to specify is this role is a custom role.
+     * Custom roles are managed by this service.
+     */
+    isManaged: boolean;
 }
 
 /**

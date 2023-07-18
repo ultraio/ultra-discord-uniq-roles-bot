@@ -1,9 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import * as Services from '../..';
-import { dTokenFactory } from 'interfaces/database';
 
 const commandName = 'rmvfactory';
-const commandDescription = 'Allows an admin to remove a factory id and its corresponding role';
+const commandDescription = "Allows an admin to remove a factory id from it's associated role";
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
@@ -36,7 +35,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
     const factoryId = interaction.options.getInteger('factory_id')!;
 
     try {
-        // Remove tokenFactory from db
+        // Remove factoryId from db
         const resp = await Services.database.factory.removeFactory(factoryId);
         if (!resp.status) {
             return interaction.editReply({
@@ -44,21 +43,8 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
             });
         }
 
-        // Delete role from discord
-        const roleToDelete = interaction.guild?.roles.cache
-            .filter((r) => r.id == (resp.data as dTokenFactory).role)
-            .at(0);
-
-        if (!roleToDelete) {
-            return interaction.editReply({
-                content: `⚠️ Error: Unable to delete role because it doesn't exist anymore`,
-            });
-        }
-
-        await roleToDelete.delete(`Deleting role because removing factory: ${factoryId}`);
-
         return interaction.editReply({
-            content: `✅ Factory: ${factoryId} and role: ${roleToDelete.name} removed successfully`,
+            content: `✅ Factory: ${factoryId} removed successfully`,
         });
     } catch (error) {
         return interaction.editReply({

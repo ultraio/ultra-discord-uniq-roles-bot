@@ -8,12 +8,12 @@ let interval: NodeJS.Timer;
 
 const tokenTables = ['token.a', 'token.b'];
 
-export async function refreshUser(discord: string, blockchainid: string) {
+export async function refreshUser(discord: string, blockchainId: string) {
     // Get all user tokens
     let tokens: Array<I.Token> = [];
 
     for (let table of tokenTables) {
-        const rows = await Services.blockchain.getAllTableData<I.Token>('eosio.nft.ft', blockchainid, table);
+        const rows = await Services.blockchain.getAllTableData<I.Token>('eosio.nft.ft', blockchainId, table);
         if (!Array.isArray(rows)) {
             continue;
         }
@@ -39,19 +39,35 @@ export async function refreshUser(discord: string, blockchainid: string) {
     let amountAdded = 0;
     let amountRemoved = 0;
 
-    // Loop through each role, and check if a factory exists.
+    // Loop through each role, and check if it's a factory role (managed role)
     for (let role of userData?.roles) {
-        const response = await factory.getFactoryByRole(role);
-        if (!response || !response.status) {
+        const response = await factory.getFactoriesByRole(role);
+
+        // If record not found, then this role is not a factory role - don't remove
+        if (!response || !response.status || typeof response.data === 'string') {
             continue;
         }
 
-        if (typeof response.data === 'string') {
+        // If record is found, but the role is non managed, don't remove it
+        if (!response.data.isManaged) {
             continue;
         }
 
-        const factoryId = response.data.factory;
-        const tokenIndex = tokenIds.findIndex((tokenId) => tokenId === factoryId);
+        // If the role exits in the database, and user own at least one of the tokens
+        // associated with the role, keep the role
+        const factoryIds = response.data.factories;
+        let tokenIndex = -1;
+
+        // Try to find if the tokenIds are present in factoryIds for this role.
+        // If present, it means user is eligible for this role.
+        for (let i = 0; i < factoryIds.length; i++) {
+            const factoryId = factoryIds[i];
+            tokenIndex = tokenIds.findIndex((tokenId) => tokenId === factoryId);
+            // if token was found, break the loop
+            if (tokenIndex >= 0) {
+                break;
+            }
+        }
 
         // If the factory exists; and the user has the token; keep the role.
         if (tokenIndex >= 0) {
@@ -61,12 +77,11 @@ export async function refreshUser(discord: string, blockchainid: string) {
 
         // If the factory exists, and the user does not have the token; remove the role.
         await userData.member.roles.remove(role, 'No Longer Owns Token').catch((err) => {
-            util.log.warn('Cannot Assign Roles');
+            util.log.warn('Cannot Assign Roles. [Case: User no longer owns token]');
             util.log.warn(`- Does bot role have manage roles?`);
             util.log.warn(`- Is bot role above all roles that it manages?`);
         });
 
-        tokenIds.splice(tokenIndex, 1);
         amountRemoved += 1;
     }
 
@@ -82,12 +97,15 @@ export async function refreshUser(discord: string, blockchainid: string) {
             continue;
         }
 
+        // If user already have that role, skip
         if (userData.member.roles.cache.has(response.data.role)) {
             continue;
         }
 
+        // If user doesn't have the role, and is eligible for it,
+        // assign the role to user
         await userData.member.roles.add(response.data.role).catch((err) => {
-            util.log.warn('Cannot Assign Roles');
+            util.log.warn('Cannot Assign Roles. [Case: Adding role to user]');
             util.log.warn(`- Does bot role have manage roles?`);
             util.log.warn(`- Is bot role above all roles that it manages?`);
         });
