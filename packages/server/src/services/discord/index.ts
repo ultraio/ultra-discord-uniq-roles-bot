@@ -1,6 +1,7 @@
 import * as I from '../../interfaces';
 import * as Utility from '../../utility';
 import { updateAllCommands } from './update';
+import { deleteRole } from '../database/factory';
 import {
     ChatInputCommandInteraction,
     Client,
@@ -8,6 +9,7 @@ import {
     GuildMember,
     Interaction,
     RESTPostAPIChatInputApplicationCommandsJSONBody,
+    Role,
     SlashCommandBuilder,
 } from 'discord.js';
 
@@ -57,6 +59,24 @@ async function handleInteraction(interaction: Interaction) {
                 ephemeral: true,
             });
         }
+    }
+}
+
+/**
+ * Handles role deletion from discord.
+ * Will check if that role is assigned to any factories and will delete the role object from db.
+ *
+ * @param {Interaction} interaction
+ */
+async function handleRoleDelete(role: Role) {
+    try {
+        Utility.log.info(`handleRoleDelete for role [${role.name} - ${role.id}]`);
+
+        // Delete role if it exists in the db (i.e if it's a factory role)
+        // deleteRole method handles all the validation and edge cases
+        await deleteRole(role.id);
+    } catch (error) {
+        Utility.log.info(`Role [${role.name} - ${role.id}] deletion failed due to error: ${error}`);
     }
 }
 
@@ -161,6 +181,7 @@ export async function init(token: string): Promise<boolean> {
             Utility.log.info(`Discord Bot is Running`);
             client.off('error', handleError);
             client.on('interactionCreate', handleInteraction);
+            client.on('roleDelete', handleRoleDelete);
 
             await import('./commands').catch((err) => {
                 Utility.log.error(`Error: ${err}`);

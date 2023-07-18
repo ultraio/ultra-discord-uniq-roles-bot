@@ -122,3 +122,32 @@ export async function getFactoriesByRole(role: number | string): Promise<I.Respo
 
     return { status: true, data: factoryDocument };
 }
+
+/**
+ * Deletes a role from the db. Returns the role object that was deleted
+ *
+ * @export
+ * @param {string | number} role
+ * @return {(Promise<I.Response<dRole | string>>)}
+ */
+export async function deleteRole(role: number | string): Promise<I.Response<dRole | string>> {
+    const roleDocument = await getFactoriesByRole(role);
+    if (roleDocument.status === false) {
+        return { status: false, data: 'role does not exist in the database' };
+    }
+
+    const db = await shared.getDatabase();
+    if (typeof db === 'undefined') {
+        return { status: false, data: 'database could not be found' };
+    }
+
+    if (typeof roleDocument.data === 'string') {
+        return { status: false, data: 'role does not exist in the database' };
+    }
+
+    // Delete role from database
+    const collection = db.collection<Role>(COLLECTION_NAME);
+    await collection.deleteOne({ _id: roleDocument.data._id });
+
+    return { status: true, data: roleDocument.data };
+}

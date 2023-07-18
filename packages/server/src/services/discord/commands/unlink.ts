@@ -1,5 +1,4 @@
 import { Interaction, SlashCommandBuilder } from 'discord.js';
-import { Token } from '../../../interfaces/';
 import * as Services from '../..';
 
 const commandName = 'unlink';
