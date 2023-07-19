@@ -75,15 +75,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         const factoryInDb = await Services.database.factory.getFactory(factoryId);
         if (factoryInDb.status) {
             return interaction.editReply({
-                content: `⚠️ Error: Factory ID: ${factoryId} already exists in the database.`,
-            });
-        }
-
-        // Check if role is already assigned to another factory
-        const roleInDb = await Services.database.factory.getFactoryByRole(role.id);
-        if (roleInDb.status) {
-            return interaction.editReply({
-                content: `⚠️ Error: Role ${role.name} is already associated with Factory: ${factoryId}.`,
+                content: `⚠️ Error: Factory ID: ${factoryId} is already assigned to a role.`,
             });
         }
 

@@ -17,7 +17,13 @@ async function start() {
         process.exit(1);
     }
 
-    let isRunning = await Services.discord.init(config.DISCORD_BOT_TOKEN);
+    let isRunning = await Services.database.shared.init();
+    if (!isRunning) {
+        Utility.log.error('Database service could not be started.');
+        process.exit(1);
+    }
+
+    isRunning = await Services.discord.init(config.DISCORD_BOT_TOKEN);
     if (!isRunning) {
         Utility.log.error('Discord bot could not authenticate with given token');
         process.exit(1);
@@ -26,12 +32,6 @@ async function start() {
     isRunning = await Services.express.init(config.WEBSERVER_PORT);
     if (!isRunning) {
         Utility.log.error('Express service could not be started.');
-        process.exit(1);
-    }
-
-    isRunning = await Services.database.shared.init();
-    if (!isRunning) {
-        Utility.log.error('Database service could not be started.');
         process.exit(1);
     }
 
