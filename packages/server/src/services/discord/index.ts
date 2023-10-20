@@ -132,7 +132,12 @@ export async function getMember(id: string): Promise<GuildMember | undefined> {
         return undefined;
     }
 
-    return await guild.members.fetch({ user: id });
+    try {
+        const member = await guild.members.fetch({ user: id });
+        return member;
+    } catch (err) {
+        return undefined;
+    }
 }
 
 /**
