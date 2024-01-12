@@ -7,6 +7,7 @@ let isUpdating = false;
 let interval: NodeJS.Timer;
 
 const tokenTables = ['token.a', 'token.b'];
+const singleUserRefreshIntervalMs = 50;
 
 export async function refreshUser(discord: string, blockchainId: string) {
     // Get all user tokens
@@ -15,7 +16,8 @@ export async function refreshUser(discord: string, blockchainId: string) {
     for (let table of tokenTables) {
         const rows = await Services.blockchain.getAllTableData<I.Token>('eosio.nft.ft', blockchainId, table);
         if (!Array.isArray(rows)) {
-            continue;
+            util.log.warn('Failed to get uniqs owned');
+            return;
         }
 
         tokens = tokens.concat(rows);
@@ -138,9 +140,15 @@ async function updateUsers() {
     const cursor = collection.find();
 
     let document: I.db.dDiscordUser | null;
-
+    let userInfo: I.db.dDiscordUser[] = [];
     while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
-        promises.push(refreshUser(document.discord, document.blockchain));
+        for (let i = 0; i < 10000; i++) {
+            if (document) userInfo.push(document);
+        }
+    }
+    for (let i = 0; i < userInfo.length; i++) {
+        promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
+        await new Promise((r) => setTimeout(r, singleUserRefreshIntervalMs));
     }
 
     await Promise.all(promises);

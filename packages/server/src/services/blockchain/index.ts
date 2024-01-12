@@ -5,18 +5,35 @@ import crossFetch from 'cross-fetch';
 
 // This is an unused private key, it's meant for testing but in this case we just need it to exist here.
 const defaultPrivateKey = '5JtUScZK2XEp3g9gh7F8bwtPTRAkASmNrrftmx4AxDKD5K4zDnr';
-const rpc = new JsonRpc('https://api.mainnet.ultra.io/', {
-    fetch(input, init) {
-        return crossFetch(input as string, init);
-    },
-});
+let lastApiNodeIndex = 0;
+const apiNodes = [
+    'https://api.mainnet.ultra.io/',
+    'http://ultra.api.eosnation.io/',
+    'https://ultra.eosrio.io/',
+    'https://api.ultra.cryptolions.io/',
+    'https://ultra.eosusa.io',
+    'https://api.ultra.eossweden.org',
+    'https://ultra-api.eoseoul.io/'
+];
+const maxApiRetries = apiNodes.length;
 
-const api = new Api({
-    rpc,
+const api = apiNodes.map((n) => new Api({
+    rpc: new JsonRpc(n, {
+        fetch(input, init) {
+            return crossFetch(input as string, init);
+        },
+    }),
     textEncoder: new TextEncoder(),
     textDecoder: new TextDecoder(),
-    signatureProvider: new JsSignatureProvider([defaultPrivateKey]),
-});
+    signatureProvider: new JsSignatureProvider([defaultPrivateKey])
+}));
+
+const getNextApi = () => {
+    lastApiNodeIndex++;
+    if (lastApiNodeIndex >= api.length) lastApiNodeIndex = 0;
+
+    return api[lastApiNodeIndex];
+}
 
 /**
  * Returns an array of blockchain ids that belong to a public key.
@@ -25,9 +42,16 @@ const api = new Api({
  * @param {string} publicKey
  * @return {Promise<string[]>}
  */
-export async function getAccountsByKey(publicKey: string): Promise<string[]> {
-    const { account_names } = await api.rpc.history_get_key_accounts(publicKey);
-    return account_names;
+export async function getAccountsByKey(publicKey: string): Promise<string[] | null> {
+    for (let i = 0; i < maxApiRetries; i++) {
+        console.log(`Using ${lastApiNodeIndex + 1}`);
+        const { account_names } = await getNextApi().rpc.history_get_key_accounts(publicKey);
+
+        if (account_names) return account_names;
+        console.log(`API ${lastApiNodeIndex} failed, trying the next one`);
+    }
+    console.log(`Got accounts by key result`);
+    return null;
 }
 
 /**
@@ -55,19 +79,27 @@ export function getTableData(
     lowerBound: number | null = null,
     upperBound: number | null = null
 ) {
-    return api.rpc
-        .get_table_rows({
-            json: true,
-            code: contract,
-            scope,
-            table,
-            upper_bound: upperBound,
-            lower_bound: lowerBound,
-        })
-        .catch((err) => {
-            console.error(err);
-            return null;
-        });
+    for (let i = 0; i < maxApiRetries; i++) {
+        console.log(`Using ${lastApiNodeIndex + 1}`);
+        let result = getNextApi().rpc
+            .get_table_rows({
+                json: true,
+                code: contract,
+                scope,
+                table,
+                upper_bound: upperBound,
+                lower_bound: lowerBound,
+            })
+            .catch((err) => {
+                console.error(err);
+                return null;
+            });
+
+        if (result) return result;
+        console.log(`API ${lastApiNodeIndex} failed, trying the next one`);
+    }
+    console.log(`Got table data result`);
+    return null;
 }
 
 /**
@@ -86,21 +118,38 @@ export async function getAllTableData<T = Object>(
     scope: string,
     table: string,
     lower_bound: number | null = null
-): Promise<T[]> {
+): Promise<T[] | null> {
     let rows: any[] = [];
-    let data = await api.rpc.get_table_rows({ code, scope, table, json: true, lower_bound }).catch((err) => {
-        console.log(err);
-        return undefined;
-    });
+    let data: any;
+    for (let i = 0; i < maxApiRetries; i++) {
+        console.log(`Using ${lastApiNodeIndex + 1}`);
+        data = await getNextApi().rpc.get_table_rows({ code, scope, table, json: true, lower_bound }).catch((err) => {
+            console.log(err);
+            return undefined;
+        });
 
-    if (typeof data === 'undefined' || !data.rows) {
+        if (typeof data !== 'undefined') break;
+        console.log(`API ${lastApiNodeIndex} failed, trying the next one`);
+    }
+    console.log(`Got all table data result`);
+
+    if (typeof data === 'undefined' ) {
+        return null;
+    }
+    if (!data.rows) {
         return [];
     }
 
     rows = rows.concat(data.rows);
     if (data.more) {
         const newRows = await getAllTableData<T>(code, scope, table, data.next_key);
-        rows = rows.concat(newRows);
+        if (newRows) {
+            rows = rows.concat(newRows);
+        }
+        else {
+            // failed to get the rest of the table data
+            return null;
+        }
     }
 
     return rows;
