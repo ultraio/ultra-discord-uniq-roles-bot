@@ -29,3 +29,6 @@ Change this to a real URL, or the address of your host if deploying into product
   
 ### MONGODB_URL
 Connection string to your mongodb instance. If you need a free host MongoDB Atlas provides small databases for free; and it's perfect for our little bot.
+
+### SINGLE_USER_REFRESH_INTERVAL_MS
+Delay between user accounts token and role refreshes. To avoid hitting rate limiting adjust the value to be as large as you can afford to wait. Total time to refresh all users will be at least (number of users * SINGLE_USER_REFRESH_INTERVAL_MS)

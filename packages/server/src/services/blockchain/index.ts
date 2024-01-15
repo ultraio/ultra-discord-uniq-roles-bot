@@ -172,8 +172,7 @@ export async function getAllTableData<T = Object>(
     let rows: any[] = [];
 
     let data = await roundRobingGetTableRows({ code, scope, table, json: true, lower_bound });
-    if (!data)
-    {
+    if (!data) {
         return null;
     }
     if (!data.rows) {

@@ -130,6 +130,8 @@ async function updateUsers() {
     const startTime = Date.now();
     util.log.info(`Refresh Started`);
 
+    const config = util.config.get();
+
     const db = await shared.getDatabase();
     if (typeof db === 'undefined') {
         isUpdating = false;
@@ -147,7 +149,7 @@ async function updateUsers() {
     }
     for (let i = 0; i < userInfo.length; i++) {
         promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
-        await new Promise((r) => setTimeout(r, singleUserRefreshIntervalMs));
+        await new Promise((r) => setTimeout(r, config.SINGLE_USER_REFRESH_INTERVAL_MS));
     }
 
     await Promise.all(promises);

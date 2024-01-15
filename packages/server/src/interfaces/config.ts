@@ -54,4 +54,12 @@ export default interface Config {
      * @memberof Config
      */
     MONGODB_URL: string;
+
+    /**
+     * Delay between individual account role refresh requests
+     *
+     * @type {number}
+     * @memberof Config
+     */
+    SINGLE_USER_REFRESH_INTERVAL_MS: number;
 }

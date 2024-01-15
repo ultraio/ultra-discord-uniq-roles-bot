@@ -11,6 +11,7 @@ let defaultConfig: I.Config = {
     WEBSERVER_PORT: process.env.WEBSERVER_PORT || 3000,
     VITE_PORT: 3102,
     MONGODB_URL: process.env.MONGODB_URL || 'mongodb://0.0.0.0:27017',
+    SINGLE_USER_REFRESH_INTERVAL_MS: 50,
 };
 
 /**
