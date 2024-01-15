@@ -7,7 +7,6 @@ let isUpdating = false;
 let interval: NodeJS.Timer;
 
 const tokenTables = ['token.a', 'token.b'];
-const singleUserRefreshIntervalMs = 50;
 
 export async function refreshUser(discord: string, blockchainId: string) {
     // Get all user tokens
