@@ -64,7 +64,7 @@ const roundRobingRequest = async (callback: (api: Api) => Promise<any>) => {
  * with different API node in case of failure
  *
  * @param {string} publicKey
- * @return {Promise<string[]>} 
+ * @return {Promise<string[] | null>}
  */
 const roundRobinHistoryGetKeyAccounts = async (publicKey: string) => {
     const { account_names } = await roundRobingRequest((api) => { return api.rpc.history_get_key_accounts(publicKey); });
@@ -105,7 +105,7 @@ const roundRobingGetTableRows = async ({ json, code, scope, table, table_key, lo
  *
  * @export
  * @param {string} publicKey
- * @return {Promise<string[]>}
+ * @return {Promise<string[] | null>}
  */
 export async function getAccountsByKey(publicKey: string): Promise<string[] | null> {
     const { account_names } = await roundRobinHistoryGetKeyAccounts(publicKey);
