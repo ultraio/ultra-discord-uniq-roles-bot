@@ -17,7 +17,7 @@ const apiNodes = [
 ];
 const maxApiRetries = apiNodes.length;
 
-const api = apiNodes.map((n) => new Api({
+const apis = apiNodes.map((n) => new Api({
     rpc: new JsonRpc(n, {
         fetch(input, init) {
             return crossFetch(input as string, init);
@@ -28,11 +28,76 @@ const api = apiNodes.map((n) => new Api({
     signatureProvider: new JsSignatureProvider([defaultPrivateKey])
 }));
 
-const getNextApi = () => {
-    lastApiNodeIndex++;
-    if (lastApiNodeIndex >= api.length) lastApiNodeIndex = 0;
+/**
+ * Allows to provide arbitrary callback to perform on the available Blockchain API.
+ * In case request fails the function will try to use the callback on the next API
+ *
+ * @param {(api: Api) => Promise<any>} callback
+ * @return {*} 
+ */
+const roundRobingRequest = async (callback: (api: Api) => Promise<any>) => {
+    let requestErrors: any[] = [];
+    for (let i = 0; i < maxApiRetries; i++) {
+        let newLastApiNodeIndex = lastApiNodeIndex;
+        const result = await callback(apis[lastApiNodeIndex])
+            .catch((err) => {
+                requestErrors.push(err);
+                //console.error(err);
+                return null;
+            });
+        if (result) return result;
+        newLastApiNodeIndex++;
+        if (newLastApiNodeIndex >= apis.length) newLastApiNodeIndex = 0;
+        // Parallel requests may try to independently increment the counter
+        // To combat that we only increment it up (or to 0 in case it loops back)
+        if (newLastApiNodeIndex > lastApiNodeIndex || newLastApiNodeIndex == 0) {
+            lastApiNodeIndex = newLastApiNodeIndex;
+            console.log(`Switching to API with index ${lastApiNodeIndex}`);
+        }
+    }
+    console.log(`Failed to make blockchain API request: ${requestErrors}`);
+    return null;
+}
 
-    return api[lastApiNodeIndex];
+/**
+ * Makes a request to blockchain API to get account names associated with public key and will retry
+ * with different API node in case of failure
+ *
+ * @param {string} publicKey
+ * @return {Promise<string[]>} 
+ */
+const roundRobinHistoryGetKeyAccounts = async (publicKey: string) => {
+    const { account_names } = await roundRobingRequest((api) => { return api.rpc.history_get_key_accounts(publicKey); });
+    if (account_names) return account_names;
+    return null;
+}
+
+/**
+ * Makes a request to blockchain API to get table rows and will retry with different API node in case
+ * of failure
+ *
+ * @param {*} - get_table_rows request arguments
+ * @return {*} - Blockchain smart contract table rows
+ */
+const roundRobingGetTableRows = async ({ json, code, scope, table, table_key, lower_bound, upper_bound, index_position, key_type, limit, reverse, show_payer, }: any) => {
+    const result = await roundRobingRequest((api) => { return api.rpc.get_table_rows(
+        {
+            json,
+            code,
+            scope,
+            table,
+            table_key,
+            lower_bound,
+            upper_bound,
+            index_position,
+            key_type,
+            limit,
+            reverse,
+            show_payer
+        });
+    });
+    if (result) return result;
+    return null;
 }
 
 /**
@@ -43,14 +108,9 @@ const getNextApi = () => {
  * @return {Promise<string[]>}
  */
 export async function getAccountsByKey(publicKey: string): Promise<string[] | null> {
-    for (let i = 0; i < maxApiRetries; i++) {
-        console.log(`Using ${lastApiNodeIndex + 1}`);
-        const { account_names } = await getNextApi().rpc.history_get_key_accounts(publicKey);
-
-        if (account_names) return account_names;
-        console.log(`API ${lastApiNodeIndex} failed, trying the next one`);
-    }
-    console.log(`Got accounts by key result`);
+    const { account_names } = await roundRobinHistoryGetKeyAccounts(publicKey);
+    if (account_names) return account_names;
+    console.log(`Failed to get accounts by key from any API`);
     return null;
 }
 
@@ -72,33 +132,23 @@ export async function getAccountsByKey(publicKey: string): Promise<string[] | nu
  *
  * @returns a Promise that resolves to the result containing table rows. If there is an error, the function catches it and returns `null`.
  */
-export function getTableData(
+export async function getTableData(
     contract: string,
     scope: string,
     table: string,
     lowerBound: number | null = null,
     upperBound: number | null = null
 ) {
-    for (let i = 0; i < maxApiRetries; i++) {
-        console.log(`Using ${lastApiNodeIndex + 1}`);
-        let result = getNextApi().rpc
-            .get_table_rows({
-                json: true,
-                code: contract,
-                scope,
-                table,
-                upper_bound: upperBound,
-                lower_bound: lowerBound,
-            })
-            .catch((err) => {
-                console.error(err);
-                return null;
-            });
-
-        if (result) return result;
-        console.log(`API ${lastApiNodeIndex} failed, trying the next one`);
-    }
-    console.log(`Got table data result`);
+    let result = await roundRobingGetTableRows({
+        json: true,
+        code: contract,
+        scope,
+        table,
+        upper_bound: upperBound,
+        lower_bound: lowerBound,
+    });
+    if (result) return result;
+    console.log(`Failed to get table data from any API`);
     return null;
 }
 
@@ -120,20 +170,10 @@ export async function getAllTableData<T = Object>(
     lower_bound: number | null = null
 ): Promise<T[] | null> {
     let rows: any[] = [];
-    let data: any;
-    for (let i = 0; i < maxApiRetries; i++) {
-        console.log(`Using ${lastApiNodeIndex + 1}`);
-        data = await getNextApi().rpc.get_table_rows({ code, scope, table, json: true, lower_bound }).catch((err) => {
-            console.log(err);
-            return undefined;
-        });
 
-        if (typeof data !== 'undefined') break;
-        console.log(`API ${lastApiNodeIndex} failed, trying the next one`);
-    }
-    console.log(`Got all table data result`);
-
-    if (typeof data === 'undefined' ) {
+    let data = await roundRobingGetTableRows({ code, scope, table, json: true, lower_bound });
+    if (!data)
+    {
         return null;
     }
     if (!data.rows) {

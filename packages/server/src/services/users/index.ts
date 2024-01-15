@@ -31,6 +31,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
             })
         ),
     ];
+    const tokenCount = tokenIds.length;
 
     // Get all user roles
     const userData = await Services.discord.getMemberAndRoles(discord);
@@ -111,7 +112,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
     }
 
     util.log.info(
-        `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenIds.length}`
+        `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenCount}`
     );
 }
 
@@ -142,9 +143,7 @@ async function updateUsers() {
     let document: I.db.dDiscordUser | null;
     let userInfo: I.db.dDiscordUser[] = [];
     while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
-        for (let i = 0; i < 10000; i++) {
-            if (document) userInfo.push(document);
-        }
+        if (document) userInfo.push(document);
     }
     for (let i = 0; i < userInfo.length; i++) {
         promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
