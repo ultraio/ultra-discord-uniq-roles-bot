@@ -23,6 +23,7 @@ async function getFactoryOnChain(factoryId: number): Promise<any> {
 
     // Check in v0 table first
     results = await Services.blockchain.getTableData('eosio.nft.ft', 'eosio.nft.ft', 'factory.a', factoryId, factoryId); // providing the factoryId as upper and lower bound works as a "WHERE factory.id = {factoryId}" filter
+    if (!results) return null;
     factoryIndex = results.rows.findIndex((x) => x.id == factoryId);
 
     // if found in v0, return factory
@@ -38,6 +39,7 @@ async function getFactoryOnChain(factoryId: number): Promise<any> {
             factoryId
         );
 
+        if (!results) return null;
         factoryIndex = results.rows.findIndex((x) => x.id == factoryId);
 
         // if not found even in v1, return null as factory does not exist

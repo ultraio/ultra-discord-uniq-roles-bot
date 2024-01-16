@@ -15,7 +15,8 @@ export async function refreshUser(discord: string, blockchainId: string) {
     for (let table of tokenTables) {
         const rows = await Services.blockchain.getAllTableData<I.Token>('eosio.nft.ft', blockchainId, table);
         if (!Array.isArray(rows)) {
-            continue;
+            util.log.warn('Failed to get uniqs owned');
+            return;
         }
 
         tokens = tokens.concat(rows);
@@ -29,6 +30,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
             })
         ),
     ];
+    const tokenCount = tokenIds.length;
 
     // Get all user roles
     const userData = await Services.discord.getMemberAndRoles(discord);
@@ -109,7 +111,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
     }
 
     util.log.info(
-        `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenIds.length}`
+        `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenCount}`
     );
 }
 
@@ -127,6 +129,8 @@ async function updateUsers() {
     const startTime = Date.now();
     util.log.info(`Refresh Started`);
 
+    const config = util.config.get();
+
     const db = await shared.getDatabase();
     if (typeof db === 'undefined') {
         isUpdating = false;
@@ -138,9 +142,13 @@ async function updateUsers() {
     const cursor = collection.find();
 
     let document: I.db.dDiscordUser | null;
-
+    let userInfo: I.db.dDiscordUser[] = [];
     while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
-        promises.push(refreshUser(document.discord, document.blockchain));
+        if (document) userInfo.push(document);
+    }
+    for (let i = 0; i < userInfo.length; i++) {
+        promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
+        await new Promise((r) => setTimeout(r, config.SINGLE_USER_REFRESH_INTERVAL_MS));
     }
 
     await Promise.all(promises);

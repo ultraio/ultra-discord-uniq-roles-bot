@@ -64,7 +64,13 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
     }
 
     const accounts = await Services.blockchain.getAccountsByKey(key);
-    if (accounts.length <= 0) {
+    if (accounts == null) {
+        return res.status(500).json({
+            status: false,
+            message: 'Failed to make internal request for blockchain accounts.',
+        });
+    }
+    else if (accounts.length <= 0) {
         return res.status(400).json({
             status: false,
             message: 'No blockchain accounts exist for the provided public key.',
