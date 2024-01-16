@@ -69,8 +69,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
             status: false,
             message: 'Failed to make internal request for blockchain accounts.',
         });
-    }
-    else if (accounts.length <= 0) {
+    } else if (accounts.length <= 0) {
         return res.status(400).json({
             status: false,
             message: 'No blockchain accounts exist for the provided public key.',
@@ -88,6 +87,10 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
 
     await Services.users.refreshUser(verificationData.discord, blockchainid);
     return res.status(200).json({ status: true, message: 'successfully verified signatures' });
+});
+
+app.get(Endpoints.Health, async (req: Request, res: Response) => {
+    return res.send(true);
 });
 
 /**
