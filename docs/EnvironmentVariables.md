@@ -28,7 +28,7 @@ Usually `3000`.
 Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the bot.
 
 ### SIGNING_CNAME
-Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the signing page website.
+Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the signing page website. You can use the default value which is the official Ultra discord message signing static website: https://discord.ultra.io/
 
 The signing website code is available in a separate dedicated repository: [discrod bot signing website](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website)
 

@@ -21,24 +21,24 @@ function generateSigningURL(hash: string, message: string): string {
     // localhost
     // must be https to work with wallet
     // however, callback needs to be http while in dev mode
-    let initialHost = `https://${cnameBotHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
-    let callbackHost = `https://${cnameSigningHost}:${config.WEBSERVER_PORT}`;
+    let signingHost = `https://${cnameSigningHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
+    let callbackHost = `https://${cnameBotHost}:${config.WEBSERVER_PORT}`;
 
     // cname specific with https
     if (cnameBotHost.includes('http') || cnameBotHost.includes('https')) {
-        initialHost = cnameBotHost;
+        callbackHost = cnameBotHost;
     }
     if (cnameSigningHost.includes('http') || cnameSigningHost.includes('https')) {
-        callbackHost = cnameSigningHost;
+        signingHost = cnameSigningHost;
     }
 
     // http://host:?port/verifySignature
     const callback = encodeURI(
-        (isUsingDevMode ? callbackHost.replace('https', 'http') : initialHost) + Endpoints.VerifySignature
+        (isUsingDevMode ? callbackHost.replace('https', 'http') : callbackHost) + Endpoints.VerifySignature
     );
 
     // http://host:?port/askToSign
-    let url = initialHost + Endpoints.SignMessage;
+    let url = signingHost + Endpoints.SignMessage;
 
     // http://host:?port/askToSign?cb=callback
     url += '?cb=' + callback;

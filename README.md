@@ -20,8 +20,6 @@ Upon connecting their account to this bot it will then periodically update roles
 
 - [Discord Bot Setup](./docs/DiscordBotSetup.md)
 
-- [Discord Bot Message Signing Website](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website)
-
 <br />
 
 ## 🚀 Setup
@@ -58,7 +56,7 @@ APPLICATION_ID=
 GUILD_ID=
 WEBSERVER_PORT=3000
 BOT_CNAME=localhost
-SIGNING_CNAME=localhost
+SIGNING_CNAME=https://discord.ultra.io/
 MONGODB_URL=mongodb://USERNAME:PASSWORD@HOST
 SINGLE_USER_REFRESH_INTERVAL_MS=50
 ```
@@ -82,6 +80,8 @@ Use this if you are making changes.
 Ultra Wallet requires an HTTP(s) server to work with it.
 
 This starts the server and uses default values for config instead of `.env`
+
+Development mode may require you to run your own version of client for message signing. [Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md) instead of default one provided in `.env.example` under `SIGNING_CNAME`.
 
 ```
 npm run dev -w packages/server
