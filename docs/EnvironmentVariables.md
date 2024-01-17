@@ -30,6 +30,8 @@ Change this to a real URL, or the address of your host if deploying into product
 ### SIGNING_CNAME
 Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the signing page website.
 
+The signing website code is available in a separate dedicated repository: [discrod bot signing website](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website)
+
 ### MONGODB_URL
 Connection string to your mongodb instance. If you need a free host MongoDB Atlas provides small databases for free; and it's perfect for our little bot.
 

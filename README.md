@@ -8,6 +8,8 @@ Upon connecting their account to this bot it will then periodically update roles
 
 [Read More...](./docs/Summary.md)
 
+[Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md)
+
 [Read About Server...](./packages/server/README.md)
 
 <br />
@@ -17,6 +19,8 @@ Upon connecting their account to this bot it will then periodically update roles
 - [NodeJS 16+](https://nodejs.org/en/download)
 
 - [Discord Bot Setup](./docs/DiscordBotSetup.md)
+
+- [Discord Bot Message Signing Website](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website)
 
 <br />
 
@@ -65,9 +69,7 @@ Depending on your environment and usecase you will want to use one of the follow
 
 ### Production
 
-Builds both Client & Server, then Starts the Bot.
-
-HTML files are automatically built to `packages/server/dist/html`.
+Builds the Server, then Starts the Bot. Uses `.env` values
 
 ```
 npm run start -ws
@@ -79,7 +81,7 @@ Use this if you are making changes.
 
 Ultra Wallet requires an HTTP(s) server to work with it.
 
-This starts a Vite Server with local https, and the server without feeding the built pages through the endpoint.
+This starts the server and uses default values for config instead of `.env`
 
 ```
 npm run dev -w packages/server

@@ -10,7 +10,7 @@ let defaultConfig: I.Config = {
     APPLICATION_ID: process.env.APPLICATION_ID,
     GUILD_ID: process.env.GUILD_ID,
     WEBSERVER_PORT: process.env.WEBSERVER_PORT || 3000,
-    VITE_PORT: 3103,
+    VITE_PORT: 3102,
     MONGODB_URL: process.env.MONGODB_URL || 'mongodb://0.0.0.0:27017',
     SINGLE_USER_REFRESH_INTERVAL_MS: 50,
 };

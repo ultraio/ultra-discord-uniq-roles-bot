@@ -19,13 +19,15 @@ Below explains the general workflow of the program, and what it does
 
 ## Folder Structure
 
-This repository uses a small `monorepo` structure and both the `client` and `server` files can be found under the `packages` folder.
+This repository contains only the `server` files which can be found under the `packages` folder.
+
+Files for the `client` are located in a separate repository
 
 ### Client
 
 This is where the HTML data lives, and includes all the necessary files for a small single page application. 
 
-[Read more about the client...](../packages/client/README.md)
+[Read more about the client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md)
 
 ### Server
 
