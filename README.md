@@ -1,104 +1,51 @@
-# Ultra Uniq Discord Bot
+# Server
 
-Our goal with this bot is to allow users of our Blockchain to easily bind Uniq Factories against Discord Roles.
+This utilizes express, and discord.js to create a Discord Bot with a page served alongside the bot.
 
-Which allows for users of Discord to bind their Discord Account to the Ultra Blockchain.
+## Commands
 
-Upon connecting their account to this bot it will then periodically update roles for a user based on what roles have bindings with a uniq factory.
+From the root directory of this monorepo; run any of the following commands.
 
-[Read More...](./docs/Summary.md)
+### Dev
 
-[Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md)
-
-[Read About Server...](./packages/server/README.md)
-
-<br />
-
-## ⚙️ Prerequisites
-
-- [NodeJS 16+](https://nodejs.org/en/download)
-
-- [Discord Bot Setup](./docs/DiscordBotSetup.md)
-
-<br />
-
-## 🚀 Setup
-
-Clone the repository
+Spins up a localhost server to perform development against for the server-side.
 
 ```
-git clone https://github.com/ultraio/ultra-discord-uniq-roles-bot
+npm run -w packages/server
 ```
 
-Navigate into the newly created folder
+### Build
 
 ```
-cd ultra-discord-uniq-roles-bot
+npm run build -w packages/server
 ```
 
-Install npm packages
+## Folder Structure
 
-```
-npm install
-```
+The main logic lives inside of the `src/services` folder.
 
-Create an `.env` file in the `packages/server` folder.
+The bot will not start without starting every service successfully.
 
-Fill it out with the environment variable information.
+### services/blockchain
 
-See [the Environment Variables section for more info](./docs/EnvironmentVariables.md).
+Handles various calls to the ultra main network chain
+  
+### services/database
 
-See [the Discord Bot Setup](./docs//DiscordBotSetup.md) to deploy your bot.
+Handles writing to a MongoDB collection for an individual user, or a token factory binding to a discord role
+  
+### services/discord
 
-```
-DISCORD_BOT_TOKEN=
-APPLICATION_ID=
-GUILD_ID=
-WEBSERVER_PORT=3000
-BOT_CNAME=localhost
-SIGNING_CNAME=https://discord.ultra.io/
-MONGODB_URL=mongodb://USERNAME:PASSWORD@HOST
-SINGLE_USER_REFRESH_INTERVAL_MS=50
-```
+Handles all slash commands that are integrated with discord
+  
+### services/express
 
-## 🏁 Start the Bot
+Handles feeding the compiled HTML static site to users who access the available endpoint that is provided by this bot
+  
+### services/messageProvider
 
-Depending on your environment and usecase you will want to use one of the following commands to start the bot.
+Generates cached messages which are used to help identify a signature after a signature is signed by a blockchain account
+  
+### services/users
 
-### Production
-
-Builds the Server, then Starts the Bot. Uses `.env` values
-
-```
-npm run start -ws
-```
-
-### Development
-
-Use this if you are making changes.
-
-Ultra Wallet requires an HTTP(s) server to work with it.
-
-This starts the server and uses default values for config instead of `.env`
-
-Development mode may require you to run your own version of client for message signing. [Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md) instead of default one provided in `.env.example` under `SIGNING_CNAME`.
-
-```
-npm run dev -w packages/server
-```
-
-## Docker
-
-These are general purpose docker instructions based off this repository.
-
-Start by adding your `.env` file to `packages/server/.env`
-
-Run the following to start the bot.
-
-```
-docker build -t uniqbot .
-```
-
-```
-docker compose up
-```
+Handles refreshing user data and inventories and rebinding roles.
