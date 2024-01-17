@@ -7,7 +7,7 @@ async function start() {
     let config = Utility.config.get();
     if (args.includes('--mode=dev')) {
         Utility.log.info(`Started in Development Mode`);
-        Utility.config.set('VITE_PORT', 3102);
+        Utility.config.set('VITE_PORT', 3103);
         Utility.config.set('WEBSERVER_PORT', 3101);
         config = Utility.config.get();
     }

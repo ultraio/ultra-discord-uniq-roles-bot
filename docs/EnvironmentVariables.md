@@ -24,9 +24,12 @@ What port to run the web server under.
 
 Usually `3000`.
   
-### CNAME
+### BOT_CNAME
 Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the bot.
-  
+
+### SIGNING_CNAME
+Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the signing page website.
+
 ### MONGODB_URL
 Connection string to your mongodb instance. If you need a free host MongoDB Atlas provides small databases for free; and it's perfect for our little bot.
 

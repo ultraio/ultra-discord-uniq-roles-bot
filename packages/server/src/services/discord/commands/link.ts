@@ -14,19 +14,22 @@ const args = process.argv;
  */
 function generateSigningURL(hash: string, message: string): string {
     const config = Utility.config.get();
-    const cnameHost = config.CNAME;
+    const cnameBotHost = config.BOT_CNAME;
+    const cnameSigningHost = config.SIGNING_CNAME;
     const isUsingDevMode = args.includes('--mode=dev');
 
     // localhost
     // must be https to work with wallet
     // however, callback needs to be http while in dev mode
-    let initialHost = `https://${cnameHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
-    let callbackHost = `https://${cnameHost}:${config.WEBSERVER_PORT}`;
+    let initialHost = `https://${cnameBotHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
+    let callbackHost = `https://${cnameSigningHost}:${config.WEBSERVER_PORT}`;
 
     // cname specific with https
-    if (cnameHost.includes('http') || cnameHost.includes('https')) {
-        initialHost = cnameHost;
-        callbackHost = cnameHost;
+    if (cnameBotHost.includes('http') || cnameBotHost.includes('https')) {
+        initialHost = cnameBotHost;
+    }
+    if (cnameSigningHost.includes('http') || cnameSigningHost.includes('https')) {
+        callbackHost = cnameSigningHost;
     }
 
     // http://host:?port/verifySignature

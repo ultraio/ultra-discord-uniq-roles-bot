@@ -45,7 +45,15 @@ export default interface Config {
      * @type {string}
      * @memberof Config
      */
-    CNAME: string;
+    BOT_CNAME: string;
+
+    /**
+     * Change this to the signing static website name, or a full url if deploying to production
+     *
+     * @type {string}
+     * @memberof Config
+     */
+    SIGNING_CNAME: string;
 
     /**
      * MongoDB connection string
