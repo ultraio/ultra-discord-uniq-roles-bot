@@ -1,7 +1,6 @@
 {
     "name": "ultra-discord-uniq-roles-bot",
     "workspaces": [
-        "./packages/client",
         "./packages/server"
     ]
 }

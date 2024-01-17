@@ -108,7 +108,7 @@ const roundRobingGetTableRows = async ({ json, code, scope, table, table_key, lo
  * @return {Promise<string[] | null>}
  */
 export async function getAccountsByKey(publicKey: string): Promise<string[] | null> {
-    const { account_names } = await roundRobinHistoryGetKeyAccounts(publicKey);
+    const account_names = await roundRobinHistoryGetKeyAccounts(publicKey);
     if (account_names) return account_names;
     console.log(`Failed to get accounts by key from any API`);
     return null;
