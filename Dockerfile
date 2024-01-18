@@ -4,7 +4,6 @@ WORKDIR /app
 
 # Add required files
 ADD src /app/src
-ADD .env /app/.env
 ADD package.json /app/package.json
 ADD package-lock.json /app/package-lock.json
 ADD tsconfig.json /app/tsconfig.json
