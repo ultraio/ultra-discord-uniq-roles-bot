@@ -8,9 +8,9 @@ Upon connecting their account to this bot it will then periodically update roles
 
 [Read More...](./docs/Summary.md)
 
-[Read About Client...](./packages/client/README.md)
+[Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md)
 
-[Read About Server...](./packages/server/README.md)
+[Read About Server...](./docs/Server.md)
 
 <br />
 
@@ -42,7 +42,7 @@ Install npm packages
 npm install
 ```
 
-Create an `.env` file in the `packages/server` folder.
+Create an `.env` file in the root repository folder by copying the `.env.example`.
 
 Fill it out with the environment variable information.
 
@@ -56,6 +56,7 @@ APPLICATION_ID=
 GUILD_ID=
 WEBSERVER_PORT=3000
 CNAME=localhost
+SIGNING_CNAME=https://discord.ultra.io/
 MONGODB_URL=mongodb://USERNAME:PASSWORD@HOST
 SINGLE_USER_REFRESH_INTERVAL_MS=50
 ```
@@ -66,12 +67,10 @@ Depending on your environment and usecase you will want to use one of the follow
 
 ### Production
 
-Builds both Client & Server, then Starts the Bot.
-
-HTML files are automatically built to `packages/server/dist/html`.
+Builds the Server, then Starts the Bot. Uses `.env` values
 
 ```
-npm run start -ws
+npm run start
 ```
 
 ### Development
@@ -80,17 +79,19 @@ Use this if you are making changes.
 
 Ultra Wallet requires an HTTP(s) server to work with it.
 
-This starts a Vite Server with local https, and the server without feeding the built pages through the endpoint.
+This starts the server and uses default values for config instead of `.env`
+
+Development mode may require you to run your own version of client for message signing. [Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md) instead of default one provided in `.env.example` under `SIGNING_CNAME`.
 
 ```
-npm run dev -w packages/server
+npm run dev
 ```
 
 ## Docker
 
 These are general purpose docker instructions based off this repository.
 
-Start by adding your `.env` file to `packages/server/.env`
+Start by creating your `.env` at repository root (near the `Dockerfile`)
 
 Run the following to start the bot.
 

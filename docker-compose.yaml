@@ -5,6 +5,6 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - ./packages/server/.env # read all env variables from .env
+      - ./.env # read all env variables from .env
     ports:
       - '3000:3000'

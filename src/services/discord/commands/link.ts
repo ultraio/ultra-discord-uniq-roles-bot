@@ -14,28 +14,31 @@ const args = process.argv;
  */
 function generateSigningURL(hash: string, message: string): string {
     const config = Utility.config.get();
-    const cnameHost = config.CNAME;
+    const cnameBotHost = config.CNAME;
+    const cnameSigningHost = config.SIGNING_CNAME;
     const isUsingDevMode = args.includes('--mode=dev');
 
     // localhost
     // must be https to work with wallet
     // however, callback needs to be http while in dev mode
-    let initialHost = `https://${cnameHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
-    let callbackHost = `https://${cnameHost}:${config.WEBSERVER_PORT}`;
+    let signingHost = `https://${cnameSigningHost}:${isUsingDevMode ? config.VITE_PORT : config.WEBSERVER_PORT}`;
+    let callbackHost = `https://${cnameBotHost}:${config.WEBSERVER_PORT}`;
 
     // cname specific with https
-    if (cnameHost.includes('http') || cnameHost.includes('https')) {
-        initialHost = cnameHost;
-        callbackHost = cnameHost;
+    if (cnameBotHost.includes('http') || cnameBotHost.includes('https')) {
+        callbackHost = cnameBotHost;
+    }
+    if (cnameSigningHost.includes('http') || cnameSigningHost.includes('https')) {
+        signingHost = cnameSigningHost;
     }
 
     // http://host:?port/verifySignature
     const callback = encodeURI(
-        (isUsingDevMode ? callbackHost.replace('https', 'http') : initialHost) + Endpoints.VerifySignature
+        (isUsingDevMode ? callbackHost.replace('https', 'http') : callbackHost) + Endpoints.VerifySignature
     );
 
     // http://host:?port/askToSign
-    let url = initialHost + Endpoints.SignMessage;
+    let url = signingHost + Endpoints.SignMessage;
 
     // http://host:?port/askToSign?cb=callback
     url += '?cb=' + callback;
