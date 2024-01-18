@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 const dotEnvConfig = dotenv.config();
 let isInit = false;
 let defaultConfig: I.Config = {
-    BOT_CNAME: process.env.BOT_CNAME || 'localhost',
+    CNAME: process.env.CNAME || 'localhost',
     SIGNING_CNAME: process.env.SIGNING_CNAME || 'localhost',
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
     APPLICATION_ID: process.env.APPLICATION_ID,

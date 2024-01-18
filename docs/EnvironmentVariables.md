@@ -24,7 +24,7 @@ What port to run the web server under.
 
 Usually `3000`.
   
-### BOT_CNAME
+### CNAME
 Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the bot.
 
 ### SIGNING_CNAME

@@ -45,7 +45,7 @@ export default interface Config {
      * @type {string}
      * @memberof Config
      */
-    BOT_CNAME: string;
+    CNAME: string;
 
     /**
      * Change this to the signing static website name, or a full url if deploying to production

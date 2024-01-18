@@ -14,7 +14,7 @@ const args = process.argv;
  */
 function generateSigningURL(hash: string, message: string): string {
     const config = Utility.config.get();
-    const cnameBotHost = config.BOT_CNAME;
+    const cnameBotHost = config.CNAME;
     const cnameSigningHost = config.SIGNING_CNAME;
     const isUsingDevMode = args.includes('--mode=dev');
 
