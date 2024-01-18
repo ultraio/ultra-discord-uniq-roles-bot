@@ -17,6 +17,7 @@ FROM node:lts-alpine3.16
 
 WORKDIR /app
 COPY --from=build-env /app/node_modules /app/node_modules
+COPY --from=build-env /app/dist /app/dist
 
 # Expose express server port
 EXPOSE 3000
