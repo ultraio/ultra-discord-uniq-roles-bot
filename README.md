@@ -10,7 +10,7 @@ Upon connecting their account to this bot it will then periodically update roles
 
 [Read About Client...](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website/blob/main/README.md)
 
-[Read About Server...](./server.md)
+[Read About Server...](./docs/Server.md)
 
 <br />
 

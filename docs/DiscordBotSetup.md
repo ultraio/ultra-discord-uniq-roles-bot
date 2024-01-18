@@ -30,6 +30,6 @@ _You will need to reset the secret to use it in the `.env` file that will be cre
 
 ![](https://i.imgur.com/ZebiVtR.png)
 
-- The link will let you determine where you can add the bot based on the servers you have Administrative priviledge for.
+- The link will let you determine where you can add the bot based on the servers you have Administrative privilege for.
 
-_Never ever, give a bot Administrative Priviledge_
+_Never ever, give a bot Administrative Privilege_
