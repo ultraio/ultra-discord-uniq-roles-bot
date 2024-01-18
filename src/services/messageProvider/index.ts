@@ -1,6 +1,6 @@
 import * as I from '../../interfaces';
 import * as Utility from '../../utility';
-import * as ecc from 'eosjs-ecc';
+import { ecc } from 'eosjs/dist/eosjs-ecc-migration';
 import MersenneTwister from 'mersenne-twister';
 
 const EXPIRATION_TIME_IN_MS = 60000 * 5; // 5 Minutes
