@@ -1,6 +1,6 @@
 import * as I from '../../interfaces';
 import * as Utility from '../../utility';
-import { ecc } from 'eosjs/dist/eosjs-ecc-migration';
+import { Signer } from '@ultraos/ultra-signer-lib'
 import MersenneTwister from 'mersenne-twister';
 
 const EXPIRATION_TIME_IN_MS = 60000 * 5; // 5 Minutes
@@ -103,13 +103,13 @@ export function generate(
  * @param {string} hash The original hash passed to the client
  * @param {string} signedMessage
  * @param {string} publicKey
- * @return {{ response: { message: string; status: boolean }; discord?: string }}
+ * @return {Promise<{ response: { message: string; status: boolean }; discord?: string }>}
  */
-export function verify(
+export async function verify(
     hash: string,
     signature: string,
     publicKey: string
-): { response: { message: string; status: boolean }; discord?: string } {
+): Promise<{ response: { message: string; status: boolean }; discord?: string }> {
     removeExpiredEntries();
 
     const index = getIndexByHash(hash);
@@ -136,7 +136,7 @@ export function verify(
     let didVerify = false;
 
     try {
-        didVerify = ecc.verify(signature, linkingRequest.originalHash, publicKey);
+        didVerify = await Signer.verify(signature, linkingRequest.originalHash, publicKey);
     } catch (err) {
         console.error(err);
     }
