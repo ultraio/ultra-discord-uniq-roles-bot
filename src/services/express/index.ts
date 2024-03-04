@@ -93,6 +93,10 @@ app.get(Endpoints.Health, async (req: Request, res: Response) => {
     return res.send(true);
 });
 
+app.get('*', function(req, res){
+    res.status(400).send();
+});
+
 /**
  * Initializes a webserver, and returns true when it is ready.
  *
