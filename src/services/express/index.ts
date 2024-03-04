@@ -55,7 +55,7 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
     }
 
     // If verificationData.discord exists, then it validated correctly
-    const verificationData = Services.messageProvider.verify(hash, signature, key);
+    const verificationData = await (Services.messageProvider.verify(hash, signature, key));
     if (!verificationData || !verificationData.discord) {
         return res.status(400).json({
             status: false,
@@ -91,6 +91,10 @@ app.post(Endpoints.VerifySignature, async (req: Request, res: Response) => {
 
 app.get(Endpoints.Health, async (req: Request, res: Response) => {
     return res.send(true);
+});
+
+app.get('*', function(req, res){
+    res.status(400).send();
 });
 
 /**

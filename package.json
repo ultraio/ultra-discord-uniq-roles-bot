@@ -1,6 +1,6 @@
 {
     "name": "ultra-discord-uniq-roles-bot",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "description": "Ultra Uniq Bot for Discord Servers",
     "scripts": {
         "build": "tsc --build --clean && tsc ",
@@ -11,13 +11,13 @@
     },
     "license": "ISC",
     "dependencies": {
+        "@ultraos/ultra-signer-lib": "^1.6.2",
         "body-parser": "^1.20.2",
         "cors": "^2.8.5",
         "cross-fetch": "^3.1.5",
         "discord.js": "14.10.2",
         "dotenv": "^16.0.3",
-        "enf-eosjs": "^23.0.0-rc4",
-        "eosjs": "^22.1.0",
+        "enf-eosjs": "^23.0.0",
         "express": "^4.18.2",
         "mersenne-twister": "^1.1.0",
         "mongodb": "^5.2.0",
