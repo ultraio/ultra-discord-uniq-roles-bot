@@ -1,7 +1,7 @@
 import * as I from '../../interfaces';
 import * as Utility from '../../utility';
 import { updateAllCommands } from './update';
-import { deleteRole } from '../database/factory';
+import { deleteRole } from '../database/role';
 import {
     ChatInputCommandInteraction,
     Client,

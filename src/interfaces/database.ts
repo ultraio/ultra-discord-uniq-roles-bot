@@ -74,6 +74,14 @@ export interface dRole extends Document {
      * @memberof dRole
      */
     role: string;
+
+    /**
+     * Minimum amount of UOS associated with this role.
+     *
+     * @type {number}
+     * @memberof dRole
+     */
+    uosThreshold: number;
 }
 
 /**

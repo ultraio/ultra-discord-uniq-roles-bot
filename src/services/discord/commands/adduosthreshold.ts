@@ -1,13 +1,13 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, BaseInteraction } from 'discord.js';
 import * as Services from '../..';
 
-const commandName = 'addfactory';
-const commandDescription = 'Allows an admin to bind a factory id to a role';
+const commandName = 'adduosthreshold';
+const commandDescription = `Allows an admin to bind current user's UOS balance to a role`;
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
     .addIntegerOption((option) =>
-        option.setName('factory_id').setDescription('The on-chain factory ID').setRequired(true)
+        option.setName('uos_threshold').setDescription('minimum amount of UOS required for this role').setRequired(true)
     )
     .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -69,28 +69,20 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     // Using non-null assertion operator (!) because if we get here, then these two values do exist
     // Because we're using .setRequired(true) when setting up the command options
-    const factoryId = interaction.options.getInteger('factory_id')!;
+    const uosThreshold = interaction.options.getInteger('uos_threshold')!;
     const role = interaction.options.getRole('role')!;
 
     try {
-        // Check if factory already exists in database.
-        const factoryInDb = await Services.database.role.getFactory(factoryId);
+        // Check if threshold exists in database.
+        const factoryInDb = await Services.database.role.getUosThreshold(uosThreshold);
         if (factoryInDb.status) {
             return interaction.editReply({
-                content: `⚠️ Error: Factory ID: ${factoryId} is already assigned to a role.`,
+                content: `⚠️ Error: UOS threshold: ${uosThreshold} is already assigned to a role.`,
             });
         }
 
-        // Check if factory exists on chain
-        const factoryOnChain = await getFactoryOnChain(factoryId);
-        if (!factoryOnChain) {
-            return interaction.editReply({
-                content: `⚠️ Error: Factory ID: ${factoryId} does not exist on chain.`,
-            });
-        }
-
-        // Added factory to database
-        const resp = await Services.database.role.addFactory(factoryId, role.id);
+        // Add threshold to database
+        const resp = await Services.database.role.addUosThreshold(uosThreshold, role.id);
         if (!resp.status) {
             return interaction.editReply({
                 content: `⚠️ Error: ${resp.data}`,
@@ -98,7 +90,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         return interaction.editReply({
-            content: `✅ Factory: ${factoryId} added with role: ${role.name} successfully.`,
+            content: `✅ UOS threshold: ${uosThreshold} added with role: ${role.name} successfully.`,
         });
     } catch (error) {
         return interaction.editReply({

@@ -3,3 +3,5 @@ import './link';
 import './unlink';
 import './addfactory';
 import './removefactory';
+import './adduosthreshold';
+import './removeuosthreshold';

@@ -1,13 +1,13 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import * as Services from '../..';
 
-const commandName = 'rmvfactory';
-const commandDescription = "Allows an admin to remove a factory id from it's associated role";
+const commandName = 'rmvuosthreshold';
+const commandDescription = "Allows an admin to remove a UOS threshold from it's associated role";
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
     .addIntegerOption((option) =>
-        option.setName('factory_id').setDescription('ID of the factory to remove').setRequired(true)
+        option.setName('uos_threshold').setDescription('UOS threshold to remove').setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -32,11 +32,11 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     // Using non-null assertion operator (!) because if we get here, then these two values do exist
     // Because we're using .setRequired(true) when setting up the command options
-    const factoryId = interaction.options.getInteger('factory_id')!;
+    const uosThreshold = interaction.options.getInteger('uos_threshold')!;
 
     try {
-        // Remove factoryId from db
-        const resp = await Services.database.role.removeFactory(factoryId);
+        // Remove uosThreshold from db
+        const resp = await Services.database.role.removeUosThreshold(uosThreshold);
         if (!resp.status) {
             return interaction.editReply({
                 content: `⚠️ Error: ${resp.data}`,
@@ -44,7 +44,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         return interaction.editReply({
-            content: `✅ Factory: ${factoryId} removed successfully`,
+            content: `✅ UOS threshold: ${uosThreshold} removed successfully`,
         });
     } catch (error) {
         return interaction.editReply({

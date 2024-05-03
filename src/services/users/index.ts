@@ -1,4 +1,4 @@
-import { factory, shared, user } from '../database';
+import { role, shared, user } from '../database';
 import * as util from '../../utility';
 import * as Services from '..';
 import * as I from '../../interfaces';
@@ -8,9 +8,16 @@ let interval: NodeJS.Timer;
 
 const tokenTables = ['token.a', 'token.b'];
 
+function defaultFailedToAssignRolesWarning(action: string) {
+    util.log.warn(`Cannot Assign Roles. [Case: ${action}]`);
+    util.log.warn(`- Does bot role have manage roles?`);
+    util.log.warn(`- Is bot role above all roles that it manages?`);
+}
+
 export async function refreshUser(discord: string, blockchainId: string) {
-    // Get all user tokens
+    // Get all user tokens and UOS balance
     let tokens: Array<I.Token> = [];
+    let uosBalance: number | undefined = undefined;
 
     for (let table of tokenTables) {
         const rows = await Services.blockchain.getAllTableData<I.Token>('eosio.nft.ft', blockchainId, table);
@@ -20,6 +27,18 @@ export async function refreshUser(discord: string, blockchainId: string) {
         }
 
         tokens = tokens.concat(rows);
+    }
+    {
+        const rows = await Services.blockchain.getAllTableData<I.FungibleTokenBalance>('eosio.token', blockchainId, 'accounts');
+        if (!Array.isArray(rows)) {
+            util.log.warn('Failed to get UOS balance');
+            return;
+        }
+
+        let uosBalanceObject = rows.find((r) => r.balance.split(' ')[1] === 'UOS');
+        if (uosBalanceObject) {
+            uosBalance = parseFloat(uosBalanceObject.balance.split(' ')[0]);
+        }
     }
 
     // Remove duplicates
@@ -41,9 +60,9 @@ export async function refreshUser(discord: string, blockchainId: string) {
     let amountAdded = 0;
     let amountRemoved = 0;
 
-    // Loop through each role, and check if it's a factory role
-    for (let role of userData?.roles) {
-        const response = await factory.getFactoriesByRole(role);
+    // Loop through each role, and check if it's a factory role and/or UOS threshold role
+    for (let userRole of userData?.roles) {
+        const response = await role.getDocumentByRole(userRole);
 
         // If record not found, then this role is not a factory role - don't remove
         if (!response || !response.status || typeof response.data === 'string') {
@@ -54,6 +73,11 @@ export async function refreshUser(discord: string, blockchainId: string) {
         // associated with the role, keep the role
         const factoryIds = response.data.factories;
         let tokenIndex = -1;
+
+        // Skip if there is no factory array object
+        if (!factoryIds) {
+            continue;
+        }
 
         // Try to find if the tokenIds are present in factoryIds for this role.
         // If present, it means user is eligible for this role.
@@ -73,11 +97,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
         }
 
         // If the factory exists, and the user does not have the token; remove the role.
-        await userData.member.roles.remove(role, 'No Longer Owns Token').catch((err) => {
-            util.log.warn('Cannot Assign Roles. [Case: User no longer owns token]');
-            util.log.warn(`- Does bot role have manage roles?`);
-            util.log.warn(`- Is bot role above all roles that it manages?`);
-        });
+        await userData.member.roles.remove(userRole, 'No Longer Owns Token').catch((err) => defaultFailedToAssignRolesWarning('User no longer owns token'));
 
         amountRemoved += 1;
     }
@@ -85,7 +105,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
     // Re-loop the tokens; and determine if a role exists for it
     // If it does exist; append the role.
     for (let token of tokenIds) {
-        const response = await factory.getFactory(token);
+        const response = await role.getFactory(token);
         if (!response.status) {
             continue;
         }
@@ -101,14 +121,12 @@ export async function refreshUser(discord: string, blockchainId: string) {
 
         // If user doesn't have the role, and is eligible for it,
         // assign the role to user
-        await userData.member.roles.add(response.data.role).catch((err) => {
-            util.log.warn('Cannot Assign Roles. [Case: Adding role to user]');
-            util.log.warn(`- Does bot role have manage roles?`);
-            util.log.warn(`- Is bot role above all roles that it manages?`);
-        });
+        await userData.member.roles.add(response.data.role).catch((err) => defaultFailedToAssignRolesWarning('Adding role to user'));
 
         amountAdded += 1;
     }
+
+    console.log(await role.getUosThresholdDocuments());
 
     util.log.info(
         `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenCount}`
