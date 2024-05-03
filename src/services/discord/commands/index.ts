@@ -5,3 +5,5 @@ import './addfactory';
 import './removefactory';
 import './adduosthreshold';
 import './removeuosthreshold';
+import './deleterole';
+import './printrole';

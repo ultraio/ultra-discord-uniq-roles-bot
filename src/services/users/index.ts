@@ -114,19 +114,63 @@ export async function refreshUser(discord: string, blockchainId: string) {
             continue;
         }
 
-        // If user already have that role, skip
+        // If user already has that role, skip
         if (userData.member.roles.cache.has(response.data.role)) {
             continue;
         }
 
         // If user doesn't have the role, and is eligible for it,
         // assign the role to user
-        await userData.member.roles.add(response.data.role).catch((err) => defaultFailedToAssignRolesWarning('Adding role to user'));
+        await userData.member.roles.add(response.data.role).catch((err) => defaultFailedToAssignRolesWarning('Adding factory role to user'));
 
         amountAdded += 1;
     }
 
-    console.log(await role.getUosThresholdDocuments());
+    // Update UOS roles only if we were able to get UOS balance
+    if (uosBalance) {
+        let uosThresholdDocuments = await role.getUosThresholdDocuments();
+        if (uosThresholdDocuments && uosThresholdDocuments.status && typeof uosThresholdDocuments.data !== 'string') {
+            // Sort in descending order
+            let roles = uosThresholdDocuments.data.sort((a, b) => b.uosThreshold - a.uosThreshold);
+            let identifiedRole = null;
+            for (let i = 0; i < roles.length; i++) {
+                if (uosBalance >= roles[i].uosThreshold) {
+                    // If already has a role with higher UOS threshold - remove the lower roles
+                    if (identifiedRole === null) {
+                        identifiedRole = i;
+
+                        // If user already has that role, skip
+                        if (!userData.member.roles.cache.has(roles[i].role)) {
+                            await userData.member.roles.add(roles[i].role).catch((err) => defaultFailedToAssignRolesWarning('Adding UOS threshold role to user'));
+                            amountAdded += 1;
+                        }
+                    }
+                }
+
+                if (i !== identifiedRole && userData.member.roles.cache.has(roles[i].role)) {
+                    await userData.member.roles.remove(roles[i].role, 'No Longer Within the UOS Threshold').catch((err) => defaultFailedToAssignRolesWarning('User is no longer within UOS threshold'));
+                    amountRemoved += 1;
+                }
+            }
+        }
+    }
+
+    // This is likely an unnecessary feature
+    // // Remove roles that have no conditions attached to them
+    // for (let userRole of userData?.roles) {
+    //     const response = await role.getDocumentByRole(userRole);
+
+    //     // If record not found, then this role is not a factory role - don't remove
+    //     if (!response || !response.status || typeof response.data === 'string') {
+    //         continue;
+    //     }
+
+    //     // Check if the role is effectively empty
+    //     if (!response.data.factories && !response.data.uosThreshold) {
+    //         await userData.member.roles.remove(userRole, 'Role No Longer Managed').catch((err) => defaultFailedToAssignRolesWarning('User has a role that has no conditions'));
+    //         amountRemoved += 1;
+    //     }
+    // }
 
     util.log.info(
         `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenCount}`
@@ -164,6 +208,7 @@ async function updateUsers() {
     while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
         if (document) userInfo.push(document);
     }
+
     for (let i = 0; i < userInfo.length; i++) {
         promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
         await new Promise((r) => setTimeout(r, config.SINGLE_USER_REFRESH_INTERVAL_MS));

@@ -99,6 +99,35 @@ export async function getFactory(factory: number): Promise<I.Response<dRole | st
 }
 
 /**
+ * Returns associated roles that contain factory requirement.
+ *
+ * @export
+ * @return {(Promise<I.Response<dRole[] | string>>)}
+ */
+export async function getFactoryDocuments(): Promise<I.Response<dRole[] | string>> {
+    const db = await shared.getDatabase();
+    if (typeof db === 'undefined') {
+        return { status: false, data: 'database could not be found' };
+    }
+
+    const collection = db.collection(COLLECTION_NAME);
+    const roleDocuments = await collection.find<dRole>({ factory: { $ne : null } });
+    let response: dRole[] = [];
+    while (await roleDocuments.hasNext().catch((err) => {
+        return null;
+    })) {
+        let document = await roleDocuments.next().catch((err) => {
+            return null;
+        });
+        // Search filter already checked that factories is not null
+        if (document && document.factories.length > 0) response.push(document);
+        else break;
+    }
+
+    return { status: true, data: response };
+}
+
+/**
  * Returns associated role document based on role id.
  *
  * @export
