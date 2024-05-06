@@ -12,42 +12,6 @@ const command = new SlashCommandBuilder()
     .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
-/**
- * Helper function to retrieve a factory object from either the v0 or v1 table based on the provided factory ID.
- * @param {number} factoryId - The factoryId to search for.
- * @returns a Promise that resolves to either the factory object, or null if it does not exist.
- */
-async function getFactoryOnChain(factoryId: number): Promise<any> {
-    let results: { rows: any[] };
-    let factoryIndex = -1;
-
-    // Check in v0 table first
-    results = await Services.blockchain.getTableData('eosio.nft.ft', 'eosio.nft.ft', 'factory.a', factoryId, factoryId); // providing the factoryId as upper and lower bound works as a "WHERE factory.id = {factoryId}" filter
-    if (!results) return null;
-    factoryIndex = results.rows.findIndex((x) => x.id == factoryId);
-
-    // if found in v0, return factory
-    if (factoryIndex != -1) {
-        return results.rows[factoryIndex];
-    } else {
-        // if not found in v0, check in v1
-        results = await Services.blockchain.getTableData(
-            'eosio.nft.ft',
-            'eosio.nft.ft',
-            'factory.b',
-            factoryId,
-            factoryId
-        );
-
-        if (!results) return null;
-        factoryIndex = results.rows.findIndex((x) => x.id == factoryId);
-
-        // if not found even in v1, return null as factory does not exist
-        // else return factory object
-        return factoryIndex == -1 ? null : results.rows[factoryIndex];
-    }
-}
-
 async function handleInteraction(interaction: ChatInputCommandInteraction) {
     if (!interaction.isRepliable()) {
         return;

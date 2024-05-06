@@ -74,8 +74,8 @@ export async function refreshUser(discord: string, blockchainId: string) {
         const factoryIds = response.data.factories;
         let tokenIndex = -1;
 
-        // Skip if there is no factory array object
-        if (!factoryIds) {
+        // Skip if there is no factory array object or no factories in the list
+        if (!factoryIds || factoryIds.length === 0) {
             continue;
         }
 
