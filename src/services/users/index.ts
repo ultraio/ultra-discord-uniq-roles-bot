@@ -71,7 +71,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
 
         // Check if the role is effectively empty
         // If so - remove it from the user
-        if ((!response.data.factories || response.data.factories.length === 0) && !response.data.uosThreshold) {
+        if (I.db.isRoleEmpty(response.data)) {
             await userData.member.roles.remove(userRole, 'Role No Longer Managed').catch((err) => defaultFailedToAssignRolesWarning('User has a role that has no conditions'));
             amountRemoved += 1;
             continue;
@@ -143,7 +143,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
             let identifiedRole = null;
             for (let i = 0; i < roles.length; i++) {
                 if (uosBalance >= roles[i].uosThreshold) {
-                    // If already has a role with higher UOS threshold - remove the lower roles
+                    // Only the highest role should be added
                     if (identifiedRole === null) {
                         identifiedRole = i;
 
@@ -155,6 +155,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
                     }
                 }
 
+                // If already has a role with higher UOS threshold - remove the lower roles
                 if (i !== identifiedRole && userData.member.roles.cache.has(roles[i].role)) {
                     await userData.member.roles.remove(roles[i].role, 'No Longer Within the UOS Threshold').catch((err) => defaultFailedToAssignRolesWarning('User is no longer within UOS threshold'));
                     amountRemoved += 1;
