@@ -51,21 +51,23 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
             let roles = Array.isArray(resp.data) ? resp.data : [resp.data];
             for (let role of roles) {
                 let roleData = await getRole(role.role);
-                resultString += `Role: ${roleData?.name} (${role.role})\n`;
+                let appendString = '';
+                appendString += `Role: ${roleData?.name} (${role.role})\n`;
                 if (isRoleEmpty(role)) {
-                    resultString += `Empty\n`;
+                    appendString += `Empty\n`;
                 } else {
                     if (role.factories && role.factories.length) {
-                        resultString += `Factories: ${JSON.stringify(role.factories)}\n`;
+                        appendString += `Factories: ${JSON.stringify(role.factories)}\n`;
                     }
                     if (role.uosThreshold && role.uosThreshold > 0) {
-                        resultString += `UOS threshold: ${role.uosThreshold}\n`;
+                        appendString += `UOS threshold: ${role.uosThreshold}\n`;
                     }
                 }
-                resultString += `\n`;
+                appendString += `\n`;
 
                 // Avoid hitting the message limit of Discord of 2000 characters, just in case
-                if (resultString.length > 1800) {
+                // Check for a bit less than 2000 just to have a small buffer
+                if (resultString.length + appendString.length > 1900) {
                     if (isFirstReply) {
                         isFirstReply = false;
                         await interaction.editReply({
@@ -79,6 +81,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
                     }
                     resultString = '';
                 }
+                resultString += appendString;
             }
         }
 

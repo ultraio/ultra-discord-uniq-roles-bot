@@ -54,7 +54,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         return interaction.editReply({
-            content: `✅ UOS threshold: ${uosThreshold} added with role: ${role.name} successfully.`,
+            content: `✅ UOS threshold: ${uosThreshold} added with role: ${role.name} (${role.id}) successfully.`,
         });
     } catch (error) {
         return interaction.editReply({

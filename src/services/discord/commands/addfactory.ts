@@ -98,7 +98,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         return interaction.editReply({
-            content: `✅ Factory: ${factoryId} added with role: ${role.name} successfully.`,
+            content: `✅ Factory: ${factoryId} added with role: ${role.name} (${role.id}) successfully.`,
         });
     } catch (error) {
         return interaction.editReply({
