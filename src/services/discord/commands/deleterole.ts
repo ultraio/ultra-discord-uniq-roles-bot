@@ -1,12 +1,16 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import * as Services from '../..';
+import { getRole } from '..';
 
 const commandName = 'deleterole';
 const commandDescription = "Allows an admin to delete a role record from the database so it is no longer controlled by the bot";
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
-    .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(true))
+    .addRoleOption((option) => option.setName('role').setDescription('Role id').setRequired(false))
+    .addStringOption((option) =>
+        option.setName('role_id').setDescription('Numeric ID of the role').setRequired(false)
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 async function handleInteraction(interaction: ChatInputCommandInteraction) {
@@ -28,22 +32,43 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         ephemeral: true, // Makes responses 'only you can see this'
     });
 
-    // Using non-null assertion operator (!) because if we get here, then these two values do exist
-    // Because we're using .setRequired(true) when setting up the command options
-    const role = interaction.options.getRole('role')!;
+    const role = interaction.options.getRole('role');
+    const roleNumericId = interaction.options.getString('role_id');
 
     try {
-        // Remove role from db
-        const resp = await Services.database.role.deleteRole(role.id);
-        if (!resp.status) {
+        if ((role && roleNumericId) || (!role && !roleNumericId)) {
             return interaction.editReply({
-                content: `⚠️ Error: ${resp.data}`,
+                content: `⚠️ Error: specify either one of "role" or "role_id"`,
             });
         }
 
-        return interaction.editReply({
-            content: `✅ Role link: ${role.id} removed successfully`,
-        });
+        // Remove role from db
+        if (role) {
+            const resp = await Services.database.role.deleteRole(role.id);
+            if (!resp.status) {
+                return interaction.editReply({
+                    content: `⚠️ Error: ${resp.data}`,
+                });
+            }
+
+            return interaction.editReply({
+                content: `✅ Role link: ${role.name} (${role.id}) removed successfully`,
+            });
+        }
+        if (roleNumericId) {
+            const resp = await Services.database.role.deleteRole(roleNumericId);
+            if (!resp.status) {
+                return interaction.editReply({
+                    content: `⚠️ Error: ${resp.data}`,
+                });
+            }
+
+            let roleData = await getRole(roleNumericId);
+
+            return interaction.editReply({
+                content: `✅ Role link: ${roleData?.name} (${roleNumericId}) removed successfully`,
+            });
+        }
     } catch (error) {
         return interaction.editReply({
             content: `❌ Something went wrong. Error: ${error}`,

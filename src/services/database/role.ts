@@ -24,6 +24,13 @@ export async function addFactory(factory: number, discordRole: string): Promise<
         return { status: false, data: 'database could not be found' };
     }
 
+    const roleDocument = await getDocumentByRole(discordRole);
+    if (typeof roleDocument.data !== 'string') {
+        if (roleDocument.data.uosThreshold && roleDocument.data.uosThreshold > 0) {
+            return { status: false, data: 'cannot use factory and UOS threshold requirement in the same role' };
+        }
+    }
+
     const collection = db.collection<Role>(COLLECTION_NAME);
     const result = await collection
         .findOneAndUpdate(
@@ -120,7 +127,9 @@ export async function getFactoryDocuments(): Promise<I.Response<dRole[] | string
             return null;
         });
         // Search filter already checked that factories is not null
-        if (document && document.factories.length > 0) response.push(document);
+        if (document){
+            if (document.factories.length > 0) response.push(document);
+        }
         else break;
     }
 
@@ -227,6 +236,13 @@ export async function addUosThreshold(uosThreshold: number, discordRole: string)
         return { status: false, data: 'database could not be found' };
     }
 
+    const roleDocument = await getDocumentByRole(discordRole);
+    if (typeof roleDocument.data !== 'string') {
+        if (roleDocument.data.factories && roleDocument.data.factories.length > 0) {
+            return { status: false, data: 'cannot use factory and UOS threshold requirement in the same role' };
+        }
+    }
+
     const collection = db.collection<Role>(COLLECTION_NAME);
     const result = await collection
         .findOneAndUpdate(
@@ -289,6 +305,37 @@ export async function getUosThresholdDocuments(): Promise<I.Response<dRole[] | s
 
     const collection = db.collection(COLLECTION_NAME);
     const roleDocuments = await collection.find<dRole>({ uosThreshold: { $ne : null } });
+    let response: dRole[] = [];
+    while (await roleDocuments.hasNext().catch((err) => {
+        return null;
+    })) {
+        let document = await roleDocuments.next().catch((err) => {
+            return null;
+        });
+        // Search filter already checked that uosThreshold is not null
+        if (document){
+            if (document.uosThreshold > 0) response.push(document);
+        }
+        else break;
+    }
+
+    return { status: true, data: response };
+}
+
+/**
+ * Returns all roles that are currently managed by the Discord bot.
+ *
+ * @export
+ * @return {(Promise<I.Response<dRole[] | string>>)}
+ */
+export async function getAllDocuments(): Promise<I.Response<dRole[] | string>> {
+    const db = await shared.getDatabase();
+    if (typeof db === 'undefined') {
+        return { status: false, data: 'database could not be found' };
+    }
+
+    const collection = db.collection(COLLECTION_NAME);
+    const roleDocuments = await collection.find<dRole>({});
     let response: dRole[] = [];
     while (await roleDocuments.hasNext().catch((err) => {
         return null;

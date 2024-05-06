@@ -69,13 +69,21 @@ export async function refreshUser(discord: string, blockchainId: string) {
             continue;
         }
 
-        // If the role exits in the database, and user own at least one of the tokens
+        // Check if the role is effectively empty
+        // If so - remove it from the user
+        if ((!response.data.factories || response.data.factories.length === 0) && !response.data.uosThreshold) {
+            await userData.member.roles.remove(userRole, 'Role No Longer Managed').catch((err) => defaultFailedToAssignRolesWarning('User has a role that has no conditions'));
+            amountRemoved += 1;
+            continue;
+        }
+
+        // If the role exits in the database, and user owns at least one of the tokens
         // associated with the role, keep the role
         const factoryIds = response.data.factories;
         let tokenIndex = -1;
 
-        // Skip if there is no factory array object or no factories in the list
-        if (!factoryIds || factoryIds.length === 0) {
+        // Skip if there is no factory array object
+        if (!factoryIds) {
             continue;
         }
 
@@ -154,23 +162,6 @@ export async function refreshUser(discord: string, blockchainId: string) {
             }
         }
     }
-
-    // This is likely an unnecessary feature
-    // // Remove roles that have no conditions attached to them
-    // for (let userRole of userData?.roles) {
-    //     const response = await role.getDocumentByRole(userRole);
-
-    //     // If record not found, then this role is not a factory role - don't remove
-    //     if (!response || !response.status || typeof response.data === 'string') {
-    //         continue;
-    //     }
-
-    //     // Check if the role is effectively empty
-    //     if (!response.data.factories && !response.data.uosThreshold) {
-    //         await userData.member.roles.remove(userRole, 'Role No Longer Managed').catch((err) => defaultFailedToAssignRolesWarning('User has a role that has no conditions'));
-    //         amountRemoved += 1;
-    //     }
-    // }
 
     util.log.info(
         `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenCount}`

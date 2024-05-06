@@ -1,12 +1,14 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import * as Services from '../..';
+import { isRoleEmpty } from '../../../interfaces/database';
+import { getGuild, getRole } from '..';
 
 const commandName = 'printrole';
 const commandDescription = "Allows an admin to print requirements of a specific role";
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
-    .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(true))
+    .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(false))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 async function handleInteraction(interaction: ChatInputCommandInteraction) {
@@ -28,13 +30,12 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         ephemeral: true, // Makes responses 'only you can see this'
     });
 
-    // Using non-null assertion operator (!) because if we get here, then these two values do exist
-    // Because we're using .setRequired(true) when setting up the command options
-    const role = interaction.options.getRole('role')!;
+    const role = interaction.options.getRole('role');
 
     try {
-        // Remove role from db
-        const resp = await Services.database.role.getDocumentByRole(role.id);
+        const resp = role ?
+            await Services.database.role.getDocumentByRole(role.id) :
+            await Services.database.role.getAllDocuments();
 
         if (!resp.status) {
             return interaction.editReply({
@@ -42,16 +43,55 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
             });
         }
 
+        let isFirstReply: boolean = true;
         let resultString = '';
         if (typeof resp.data === 'string') {
             resultString = resp.data;
         } else {
-            resultString = `Role: ${resp.data.role}\nFactories: ${JSON.stringify(resp.data.factories)}\n UOS threshold: ${resp.data.uosThreshold}`;
+            let roles = Array.isArray(resp.data) ? resp.data : [resp.data];
+            for (let role of roles) {
+                let roleData = await getRole(role.role);
+                resultString += `Role: ${roleData?.name} (${role.role})\n`;
+                if (isRoleEmpty(role)) {
+                    resultString += `Empty\n`;
+                } else {
+                    if (role.factories && role.factories.length) {
+                        resultString += `Factories: ${JSON.stringify(role.factories)}\n`;
+                    }
+                    if (role.uosThreshold && role.uosThreshold > 0) {
+                        resultString += `UOS threshold: ${role.uosThreshold}\n`;
+                    }
+                }
+                resultString += `\n`;
+
+                // Avoid hitting the message limit of Discord of 2000 characters, just in case
+                if (resultString.length > 1800) {
+                    if (isFirstReply) {
+                        isFirstReply = false;
+                        await interaction.editReply({
+                            content: `✅\n${resultString}`,
+                        });
+                    } else {
+                        await interaction.followUp({
+                            content: `✅\n${resultString}`,
+                            ephemeral: true, // Makes responses 'only you can see this'
+                        });
+                    }
+                    resultString = '';
+                }
+            }
         }
 
-        return interaction.editReply({
-            content: `✅ ${resultString}`,
-        });
+        if (isFirstReply) {
+            return interaction.editReply({
+                content: `✅\n${resultString}`,
+            });
+        } else {
+            return interaction.followUp({
+                content: `✅\n${resultString}`,
+                ephemeral: true, // Makes responses 'only you can see this'
+            });
+        }
     } catch (error) {
         return interaction.editReply({
             content: `❌ Something went wrong. Error: ${error}`,
