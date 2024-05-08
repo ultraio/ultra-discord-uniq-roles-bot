@@ -1,4 +1,4 @@
-import { factory, shared, user } from '../database';
+import { role, shared, user } from '../database';
 import * as util from '../../utility';
 import * as Services from '..';
 import * as I from '../../interfaces';
@@ -8,9 +8,16 @@ let interval: NodeJS.Timer;
 
 const tokenTables = ['token.a', 'token.b'];
 
+function defaultFailedToAssignRolesWarning(action: string) {
+    util.log.warn(`Cannot Assign Roles. [Case: ${action}]`);
+    util.log.warn(`- Does bot role have manage roles?`);
+    util.log.warn(`- Is bot role above all roles that it manages?`);
+}
+
 export async function refreshUser(discord: string, blockchainId: string) {
-    // Get all user tokens
+    // Get all user tokens and UOS balance
     let tokens: Array<I.Token> = [];
+    let uosBalance: number | undefined = undefined;
 
     for (let table of tokenTables) {
         const rows = await Services.blockchain.getAllTableData<I.Token>('eosio.nft.ft', blockchainId, table);
@@ -20,6 +27,18 @@ export async function refreshUser(discord: string, blockchainId: string) {
         }
 
         tokens = tokens.concat(rows);
+    }
+    {
+        const rows = await Services.blockchain.getAllTableData<I.FungibleTokenBalance>('eosio.token', blockchainId, 'accounts');
+        if (!Array.isArray(rows)) {
+            util.log.warn('Failed to get UOS balance');
+            return;
+        }
+
+        let uosBalanceObject = rows.find((r) => r.balance.split(' ')[1] === 'UOS');
+        if (uosBalanceObject) {
+            uosBalance = parseFloat(uosBalanceObject.balance.split(' ')[0]);
+        }
     }
 
     // Remove duplicates
@@ -41,19 +60,32 @@ export async function refreshUser(discord: string, blockchainId: string) {
     let amountAdded = 0;
     let amountRemoved = 0;
 
-    // Loop through each role, and check if it's a factory role
-    for (let role of userData?.roles) {
-        const response = await factory.getFactoriesByRole(role);
+    // Loop through each role, and check if it's a factory role and/or UOS threshold role
+    for (let userRole of userData?.roles) {
+        const response = await role.getDocumentByRole(userRole);
 
         // If record not found, then this role is not a factory role - don't remove
         if (!response || !response.status || typeof response.data === 'string') {
             continue;
         }
 
-        // If the role exits in the database, and user own at least one of the tokens
+        // Check if the role is effectively empty
+        // If so - remove it from the user
+        if (I.db.isRoleEmpty(response.data)) {
+            await userData.member.roles.remove(userRole, 'Role No Longer Managed').catch((err) => defaultFailedToAssignRolesWarning('User has a role that has no conditions'));
+            amountRemoved += 1;
+            continue;
+        }
+
+        // If the role exits in the database, and user owns at least one of the tokens
         // associated with the role, keep the role
         const factoryIds = response.data.factories;
         let tokenIndex = -1;
+
+        // Skip if there is no factory array object
+        if (!factoryIds) {
+            continue;
+        }
 
         // Try to find if the tokenIds are present in factoryIds for this role.
         // If present, it means user is eligible for this role.
@@ -73,11 +105,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
         }
 
         // If the factory exists, and the user does not have the token; remove the role.
-        await userData.member.roles.remove(role, 'No Longer Owns Token').catch((err) => {
-            util.log.warn('Cannot Assign Roles. [Case: User no longer owns token]');
-            util.log.warn(`- Does bot role have manage roles?`);
-            util.log.warn(`- Is bot role above all roles that it manages?`);
-        });
+        await userData.member.roles.remove(userRole, 'No Longer Owns Token').catch((err) => defaultFailedToAssignRolesWarning('User no longer owns token'));
 
         amountRemoved += 1;
     }
@@ -85,7 +113,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
     // Re-loop the tokens; and determine if a role exists for it
     // If it does exist; append the role.
     for (let token of tokenIds) {
-        const response = await factory.getFactory(token);
+        const response = await role.getFactory(token);
         if (!response.status) {
             continue;
         }
@@ -94,20 +122,46 @@ export async function refreshUser(discord: string, blockchainId: string) {
             continue;
         }
 
-        // If user already have that role, skip
+        // If user already has that role, skip
         if (userData.member.roles.cache.has(response.data.role)) {
             continue;
         }
 
         // If user doesn't have the role, and is eligible for it,
         // assign the role to user
-        await userData.member.roles.add(response.data.role).catch((err) => {
-            util.log.warn('Cannot Assign Roles. [Case: Adding role to user]');
-            util.log.warn(`- Does bot role have manage roles?`);
-            util.log.warn(`- Is bot role above all roles that it manages?`);
-        });
+        await userData.member.roles.add(response.data.role).catch((err) => defaultFailedToAssignRolesWarning('Adding factory role to user'));
 
         amountAdded += 1;
+    }
+
+    // Update UOS roles only if we were able to get UOS balance
+    if (uosBalance) {
+        let uosThresholdDocuments = await role.getUosThresholdDocuments();
+        if (uosThresholdDocuments && uosThresholdDocuments.status && typeof uosThresholdDocuments.data !== 'string') {
+            // Sort in descending order
+            let roles = uosThresholdDocuments.data.sort((a, b) => b.uosThreshold - a.uosThreshold);
+            let identifiedRole = null;
+            for (let i = 0; i < roles.length; i++) {
+                if (uosBalance >= roles[i].uosThreshold) {
+                    // Only the highest role should be added
+                    if (identifiedRole === null) {
+                        identifiedRole = i;
+
+                        // If user already has that role, skip
+                        if (!userData.member.roles.cache.has(roles[i].role)) {
+                            await userData.member.roles.add(roles[i].role).catch((err) => defaultFailedToAssignRolesWarning('Adding UOS threshold role to user'));
+                            amountAdded += 1;
+                        }
+                    }
+                }
+
+                // If already has a role with higher UOS threshold - remove the lower roles
+                if (i !== identifiedRole && userData.member.roles.cache.has(roles[i].role)) {
+                    await userData.member.roles.remove(roles[i].role, 'No Longer Within the UOS Threshold').catch((err) => defaultFailedToAssignRolesWarning('User is no longer within UOS threshold'));
+                    amountRemoved += 1;
+                }
+            }
+        }
     }
 
     util.log.info(
@@ -146,6 +200,7 @@ async function updateUsers() {
     while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
         if (document) userInfo.push(document);
     }
+
     for (let i = 0; i < userInfo.length; i++) {
         promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
         await new Promise((r) => setTimeout(r, config.SINGLE_USER_REFRESH_INTERVAL_MS));

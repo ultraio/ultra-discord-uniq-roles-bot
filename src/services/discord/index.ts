@@ -1,7 +1,7 @@
 import * as I from '../../interfaces';
 import * as Utility from '../../utility';
 import { updateAllCommands } from './update';
-import { deleteRole } from '../database/factory';
+import { deleteRole } from '../database/role';
 import {
     ChatInputCommandInteraction,
     Client,
@@ -206,4 +206,27 @@ export async function init(token: string): Promise<boolean> {
         client.once('error', handleError);
         client.login(token);
     });
+}
+
+/**
+ * Get a role in the discord server where the bot is located.
+ *
+ * @export
+ * @param {string} id
+ * @return {(Role | undefined)}
+ */
+export async function getRole(id: string | number): Promise<Role | undefined> {
+    const guild = getGuild();
+    if (typeof guild === 'undefined') {
+        return undefined;
+    }
+
+    try {
+        if (typeof id === 'number') id = id.toString();
+        const role = await guild.roles.fetch(id);
+        if (!role) return undefined;
+        return role;
+    } catch (err) {
+        return undefined;
+    }
 }

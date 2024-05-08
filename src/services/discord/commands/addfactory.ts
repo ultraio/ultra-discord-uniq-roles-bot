@@ -74,7 +74,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     try {
         // Check if factory already exists in database.
-        const factoryInDb = await Services.database.factory.getFactory(factoryId);
+        const factoryInDb = await Services.database.role.getFactory(factoryId);
         if (factoryInDb.status) {
             return interaction.editReply({
                 content: `⚠️ Error: Factory ID: ${factoryId} is already assigned to a role.`,
@@ -90,7 +90,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         // Added factory to database
-        const resp = await Services.database.factory.addFactory(factoryId, role.id);
+        const resp = await Services.database.role.addFactory(factoryId, role.id);
         if (!resp.status) {
             return interaction.editReply({
                 content: `⚠️ Error: ${resp.data}`,
@@ -98,7 +98,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         return interaction.editReply({
-            content: `✅ Factory: ${factoryId} added with role: ${role.name} successfully.`,
+            content: `✅ Factory: ${factoryId} added with role: ${role.name} (${role.id}) successfully.`,
         });
     } catch (error) {
         return interaction.editReply({

@@ -1,14 +1,15 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, BaseInteraction } from 'discord.js';
 import * as Services from '../..';
 
-const commandName = 'rmvfactory';
-const commandDescription = "Allows an admin to remove a factory id from it's associated role";
+const commandName = 'adduosthreshold';
+const commandDescription = `Allows an admin to bind current user's UOS balance to a role`;
 const command = new SlashCommandBuilder()
     .setName(commandName)
     .setDescription(commandDescription)
     .addIntegerOption((option) =>
-        option.setName('factory_id').setDescription('ID of the factory to remove').setRequired(true)
+        option.setName('uos_threshold').setDescription('minimum amount of UOS required for this role').setRequired(true)
     )
+    .addRoleOption((option) => option.setName('role').setDescription('role id').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 async function handleInteraction(interaction: ChatInputCommandInteraction) {
@@ -32,11 +33,20 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     // Using non-null assertion operator (!) because if we get here, then these two values do exist
     // Because we're using .setRequired(true) when setting up the command options
-    const factoryId = interaction.options.getInteger('factory_id')!;
+    const uosThreshold = interaction.options.getInteger('uos_threshold')!;
+    const role = interaction.options.getRole('role')!;
 
     try {
-        // Remove factoryId from db
-        const resp = await Services.database.role.removeFactory(factoryId);
+        // Check if threshold exists in database.
+        const factoryInDb = await Services.database.role.getUosThreshold(uosThreshold);
+        if (factoryInDb.status) {
+            return interaction.editReply({
+                content: `⚠️ Error: UOS threshold: ${uosThreshold} is already assigned to a role.`,
+            });
+        }
+
+        // Add threshold to database
+        const resp = await Services.database.role.addUosThreshold(uosThreshold, role.id);
         if (!resp.status) {
             return interaction.editReply({
                 content: `⚠️ Error: ${resp.data}`,
@@ -44,7 +54,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
         }
 
         return interaction.editReply({
-            content: `✅ Factory: ${factoryId} removed successfully`,
+            content: `✅ UOS threshold: ${uosThreshold} added with role: ${role.name} (${role.id}) successfully.`,
         });
     } catch (error) {
         return interaction.editReply({

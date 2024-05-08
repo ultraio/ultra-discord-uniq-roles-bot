@@ -18,7 +18,7 @@ async function removeFactoryRoles(discordId: string): Promise<{ status: boolean;
 
     // Loop through each role, and check if it's a factory role and remove it
     for (let role of userData.roles) {
-        const response = await Services.database.factory.getFactoriesByRole(role);
+        const response = await Services.database.role.getDocumentByRole(role);
 
         // If record not found, then this role is not a factory role - don't remove
         // We only keep factory roles in the db.
