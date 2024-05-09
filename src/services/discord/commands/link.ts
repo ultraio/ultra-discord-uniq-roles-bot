@@ -2,6 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Interaction, SlashCommand
 import { Endpoints } from '../../../types/endpointEnum';
 import * as Services from '../..';
 import * as Utility from '../../../utility';
+import { getUser } from '../../../services/database/user';
 
 const commandName = 'link';
 const commandDescription = 'Link up with your Ultra Blockchain ID';
@@ -59,6 +60,15 @@ async function handleInteraction(interaction: Interaction) {
     if (!interaction.member) {
         return interaction.reply({
             content: 'Could not find user in ultra server.',
+            ephemeral: true, // Makes responses 'only you can see this'
+        });
+    }
+
+    // TODO: allow multiple links to work properly
+    const discordUserDocument = await getUser(interaction.user.id);
+    if (discordUserDocument.status) {
+        return interaction.reply({
+            content: 'You have already linked some other blockchain account to your Discord account. Unlink existing link first.',
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }
