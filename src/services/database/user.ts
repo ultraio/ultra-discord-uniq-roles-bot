@@ -73,7 +73,7 @@ export async function removeUser(discord: string): Promise<I.Response<dDiscordUs
 }
 
 /**
- * Return a database doucment for a user.
+ * Return a database document for a user.
  *
  * Can use either the discord, or blockchain id for lookup.
  *
@@ -103,7 +103,7 @@ export async function getUser(
     });
 
     if (user === null || typeof user === 'undefined') {
-        return { status: false, data: 'user is already linked with a discord or blockchain id' };
+        return { status: false, data: 'discord user does not exist in the database' };
     }
 
     return { status: true, data: user };
