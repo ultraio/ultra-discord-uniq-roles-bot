@@ -59,6 +59,7 @@ CNAME=localhost
 SIGNING_CNAME=https://discord.ultra.io/
 MONGODB_URL=mongodb://USERNAME:PASSWORD@HOST
 SINGLE_USER_REFRESH_INTERVAL_MS=50
+DATABASE_NAME=UltraUniqLinks
 ```
 
 ## 🏁 Start the Bot

@@ -1,7 +1,6 @@
 import { Db, MongoClient } from 'mongodb';
 import * as Utility from '../../utility';
 
-const DatabaseName = 'UltraUniqLinks';
 let client: MongoClient | undefined;
 let isInitialized = false;
 
@@ -53,5 +52,7 @@ export async function isConnected() {
  */
 export async function getDatabase(): Promise<Db | undefined> {
     await isConnected();
-    return client?.db(DatabaseName);
+    const config = Utility.config.get();
+
+    return client?.db(config.DATABASE_NAME);
 }

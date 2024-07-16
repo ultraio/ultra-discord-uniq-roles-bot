@@ -70,4 +70,12 @@ export default interface Config {
      * @memberof Config
      */
     SINGLE_USER_REFRESH_INTERVAL_MS: number;
+
+    /**
+     * Name of the MongoDB database to use
+     *
+     * @type {string}
+     * @memberof Config
+     */
+    DATABASE_NAME: string;
 }

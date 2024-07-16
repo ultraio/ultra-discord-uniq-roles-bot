@@ -28,12 +28,15 @@ Usually `3000`.
 Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the bot.
 
 ### SIGNING_CNAME
-Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the signing page website. You can use the default value which is the official Ultra discord message signing static website: https://discord.ultra.io/
+Change this to a real URL, or the address of your host if deploying into production. This is the actual URL pointing to the signing page website. You can use the default value which is the official Ultra discord message signing static website: https://discord.ultra.io/.
 
-The signing website code is available in a separate dedicated repository: [discrod bot signing website](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website)
+The signing website code is available in a separate dedicated repository: [discrod bot signing website](https://github.com/ultraio/ultra-discord-uniq-roles-bot-website).
 
 ### MONGODB_URL
 Connection string to your mongodb instance. If you need a free host MongoDB Atlas provides small databases for free; and it's perfect for our little bot.
 
 ### SINGLE_USER_REFRESH_INTERVAL_MS
-Delay between user accounts token and role refreshes. To avoid hitting rate limiting adjust the value to be as large as you can afford to wait. Total time to refresh all users will be at least (number of users * SINGLE_USER_REFRESH_INTERVAL_MS)
+Delay between user accounts token and role refreshes. To avoid hitting rate limiting adjust the value to be as large as you can afford to wait. Total time to refresh all users will be at least (number of users * SINGLE_USER_REFRESH_INTERVAL_MS).
+
+### DATABASE_NAME
+Allows to specify the name of the MongoDB database that will be used. If the database does not exist yet it will be created.
