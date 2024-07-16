@@ -13,6 +13,7 @@ let defaultConfig: I.Config = {
     VITE_PORT: 3102,
     MONGODB_URL: process.env.MONGODB_URL || 'mongodb://0.0.0.0:27017',
     SINGLE_USER_REFRESH_INTERVAL_MS: Number(process.env.SINGLE_USER_REFRESH_INTERVAL_MS) || 50,
+    DATABASE_NAME: process.env.DATABASE_NAME || 'UltraUniqLinks',
 };
 
 /**
