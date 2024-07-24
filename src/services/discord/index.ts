@@ -3,6 +3,7 @@ import * as Utility from '../../utility';
 import { updateAllCommands } from './update';
 import { deleteRole } from '../database/role';
 import {
+    ButtonInteraction,
     ChatInputCommandInteraction,
     Client,
     Guild,
@@ -15,6 +16,11 @@ import {
 
 type InteractionCallback = (interaction: Interaction) => Promise<any>;
 type ChatInputCommandInteractionCallback = (interaction: ChatInputCommandInteraction) => Promise<any>;
+type ButtonInteractionCallback = (interaction: ButtonInteraction) => Promise<any>;
+interface CommandButtonCallback {
+    customId: string;
+    callback: InteractionCallback | ButtonInteractionCallback;
+}
 
 const client: Client = new Client({
     intents: ['Guilds', 'GuildMessages', 'GuildMembers', 'GuildModeration'],
@@ -24,26 +30,43 @@ const commands: {
     [name: string]: {
         original: SlashCommandBuilder;
         callback: InteractionCallback | ChatInputCommandInteractionCallback;
+        buttonCallbacks: CommandButtonCallback[];
     };
 } = {};
 
 /**
- * Handles slash command interactions.
+ * Handles slash command and button interactions.
  *
  * @param {Interaction} interaction
  */
 async function handleInteraction(interaction: Interaction) {
-    if (!interaction.isChatInputCommand()) {
+    if (!interaction.isChatInputCommand() && !interaction.isButton()) {
         return;
     }
 
-    const existingCommand = commands[interaction.commandName];
+    let commandName: string = '';
+    let buttonCallback: CommandButtonCallback = {customId:'', callback: async()=>{}};
+    if (interaction.isChatInputCommand()) {
+        commandName = interaction.commandName;
+    } else if (interaction.isButton()) {
+        Object.keys(commands).forEach((key) => {
+            let button = commands[key].buttonCallbacks.findIndex(c => c.customId === interaction.customId);
+            if (button >= 0) {
+                commandName = key;
+                buttonCallback = commands[key].buttonCallbacks[button];
+            }
+        });
+    }
+    if (commandName === '') return;
+
+    const existingCommand = commands[commandName];
     if (!existingCommand) {
         return;
     }
 
     try {
-        await existingCommand.callback(interaction);
+        if (interaction.isChatInputCommand() && existingCommand.callback) await existingCommand.callback(interaction);
+        if (interaction.isButton()) await buttonCallback.callback(interaction);
     } catch (err) {
         Utility.log.warn(`Error while executing command ${existingCommand.original.name}: ${err}`);
         if (interaction.replied || interaction.deferred) {
@@ -89,12 +112,14 @@ async function handleRoleDelete(role: Role) {
  */
 export function register(
     command: SlashCommandBuilder,
-    callback: InteractionCallback | ChatInputCommandInteractionCallback
+    callback: InteractionCallback | ChatInputCommandInteractionCallback,
+    buttonCallbacks: CommandButtonCallback[] = [],
 ) {
     Utility.log.info(`Added Command: ${command.name}`);
     commands[command.name] = {
         original: command,
         callback,
+        buttonCallbacks
     };
 }
 

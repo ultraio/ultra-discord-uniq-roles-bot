@@ -7,3 +7,4 @@ import './adduosthreshold';
 import './removeuosthreshold';
 import './deleterole';
 import './printrole';
+import './hello';
