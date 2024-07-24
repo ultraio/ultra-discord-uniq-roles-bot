@@ -29,9 +29,9 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
 
     try {
         const link = new ButtonBuilder()
-			.setCustomId('link')
-			.setLabel('Link Ultra Wallet')
-			.setStyle(ButtonStyle.Primary);
+            .setCustomId('link')
+            .setLabel('Link Ultra Wallet')
+            .setStyle(ButtonStyle.Primary);
 
         // const embed = new EmbedBuilder()
         //     .setColor(0x876CE4)
@@ -79,16 +79,16 @@ async function handleButtonInteraction(interaction: ButtonInteraction) {
 
     try {
         const link = new ButtonBuilder()
-			.setCustomId('link')
-			.setLabel('Link Ultra Account')
-			.setStyle(ButtonStyle.Primary);
+            .setCustomId('link')
+            .setLabel('Link Ultra Account')
+            .setStyle(ButtonStyle.Primary);
 
-		await interaction.reply({
-			content: `Welcome message`,
-			components: [new ActionRowBuilder<ButtonBuilder>({
+        await interaction.reply({
+                content: `Welcome message`,
+                components: [new ActionRowBuilder<ButtonBuilder>({
                 components: [link]
             })],
-		});
+        });
 
     } catch (error) {
         return interaction.reply({
