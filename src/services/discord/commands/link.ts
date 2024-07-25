@@ -52,7 +52,7 @@ function generateSigningURL(hash: string, message: string): string {
     return encodeURI(url.toString());
 }
 
-async function handleInteraction(interaction: Interaction) {
+export async function handleInteraction(interaction: Interaction) {
     if (!interaction.isRepliable()) {
         return;
     }
@@ -68,7 +68,7 @@ async function handleInteraction(interaction: Interaction) {
     const discordUserDocument = await getUser(interaction.user.id);
     if (discordUserDocument.status) {
         return interaction.reply({
-            content: 'You have already linked some other blockchain account to your Discord account. Unlink existing link first.',
+            content: 'You have already linked some Ultra Account to your Discord account. Unlink existing link first.',
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }
@@ -88,12 +88,39 @@ async function handleInteraction(interaction: Interaction) {
 
     const encodedUrl = generateSigningURL(messageRequest, originalMessage);
     const button = new ButtonBuilder().setLabel('Open Link').setURL(encodedUrl).setStyle(ButtonStyle.Link);
+    const verify = new ButtonBuilder().setCustomId('verify').setLabel('Is my account linked?').setStyle(ButtonStyle.Secondary);
 
     return interaction.reply({
         content: `Click the button to begin linking to Ultra Blockchain.`,
         ephemeral: true, // Makes responses 'only you can see this'
-        components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)],
+        components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button, verify)],
     });
 }
 
-Services.discord.register(command, handleInteraction);
+async function handleButtonInteraction(interaction: Interaction) {
+    if (!interaction.isRepliable()) {
+        return;
+    }
+
+    if (!interaction.member) {
+        return interaction.reply({
+            content: 'Could not find user in ultra server.',
+            ephemeral: true, // Makes responses 'only you can see this'
+        });
+    }
+
+    const discordUserDocument = await getUser(interaction.user.id);
+    if (discordUserDocument.status) {
+        return interaction.reply({
+            content: '✅ Your Ultra Account is linked',
+            ephemeral: true, // Makes responses 'only you can see this'
+        });
+    } else {
+        return interaction.reply({
+            content: '❌ Your Ultra Account is not linked',
+            ephemeral: true, // Makes responses 'only you can see this'
+        });
+    }
+}
+
+Services.discord.register(command, handleInteraction, [{customId: 'verify', callback: handleButtonInteraction}]);
