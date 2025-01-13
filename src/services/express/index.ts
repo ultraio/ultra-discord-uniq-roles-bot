@@ -94,7 +94,13 @@ app.get(Endpoints.Health, async (req: Request, res: Response) => {
 });
 
 app.get('*', function(req, res){
-    res.status(400).send();
+    // Prevent malformed URL
+    try {
+        decodeURIComponent(req.path);
+    } catch (err) {
+        return res.status(400).json({ status: false, message: 'Malformed URL' });
+    }
+    res.status(400).send('Not Found');
 });
 
 /**
