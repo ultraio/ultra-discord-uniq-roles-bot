@@ -103,3 +103,48 @@ docker build -t uniqbot .
 ```
 docker compose up
 ```
+
+## 📋 Discord Commands
+
+### User Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/link` | Link Discord account to Ultra blockchain | `/link` |
+| `/unlink` | Unlink Discord account from Ultra blockchain | `/unlink` |
+| `/hello` | Send greeting message with link button | `/hello` |
+
+### Administrator Commands
+
+#### Factory Management
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/addfactory` | Bind factory to role | `/addfactory factory:123 role:@Role` |
+| `/removefactory` | Remove factory from role | `/removefactory factory:123` |
+
+#### UOS Threshold Management
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/adduosthreshold` | Add UOS threshold to role | `/adduosthreshold uos_threshold:1000 role:@Role` |
+| `/removeuosthreshold` | Remove UOS threshold from role | `/removeuosthreshold uos_threshold:1000` |
+
+#### UOS Holder Role Management
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/setuosholderrole` | Set single UOS holder role (replaces existing) | `/setuosholderrole uos_threshold:5000 role:@UOS_Holder` |
+
+#### Role Management
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `/deleterole` | Delete role from database | `/deleterole role:@Role` |
+| `/printrole` | List all managed roles | `/printrole [role:@Role]` |
+
+### Command Details
+
+- **User Commands**: Available to all users for account linking
+- **Administrator Commands**: Require Administrator permissions
+- **UOS Holder Role**: Special role system that allows only one UOS threshold role at a time
+- **Factory Roles**: Based on Uniq token ownership
+- **UOS Threshold Roles**: Based on UOS token balance
+
+For detailed information about the UOS holder role system, see [UOS_HOLDER_ROLE_SOLUTION.md](./UOS_HOLDER_ROLE_SOLUTION.md).

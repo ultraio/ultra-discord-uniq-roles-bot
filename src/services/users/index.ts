@@ -136,6 +136,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
 
     // Update UOS roles only if we were able to get UOS balance
     if (uosBalance) {
+        // Handle regular UOS threshold roles
         let uosThresholdDocuments = await role.getUosThresholdDocuments();
         if (uosThresholdDocuments && uosThresholdDocuments.status && typeof uosThresholdDocuments.data !== 'string') {
             // Sort in descending order
@@ -158,6 +159,27 @@ export async function refreshUser(discord: string, blockchainId: string) {
                 // If already has a role with higher UOS threshold - remove the lower roles
                 if (i !== identifiedRole && userData.member.roles.cache.has(roles[i].role)) {
                     await userData.member.roles.remove(roles[i].role, 'No Longer Within the UOS Threshold').catch((err) => defaultFailedToAssignRolesWarning('User is no longer within UOS threshold'));
+                    amountRemoved += 1;
+                }
+            }
+        }
+
+        // Handle UOS holder role (special role that replaces all other UOS threshold roles)
+        let uosHolderRole = await role.getUosHolderRole();
+        if (uosHolderRole && uosHolderRole.status && typeof uosHolderRole.data !== 'string') {
+            const holderRole = uosHolderRole.data;
+            
+            // Check if user meets the UOS holder threshold
+            if (uosBalance >= holderRole.uosThreshold) {
+                // If user doesn't have the UOS holder role, add it
+                if (!userData.member.roles.cache.has(holderRole.role)) {
+                    await userData.member.roles.add(holderRole.role).catch((err) => defaultFailedToAssignRolesWarning('Adding UOS holder role to user'));
+                    amountAdded += 1;
+                }
+            } else {
+                // If user doesn't meet the threshold but has the role, remove it
+                if (userData.member.roles.cache.has(holderRole.role)) {
+                    await userData.member.roles.remove(holderRole.role, 'No Longer Meets UOS Holder Threshold').catch((err) => defaultFailedToAssignRolesWarning('User no longer meets UOS holder threshold'));
                     amountRemoved += 1;
                 }
             }

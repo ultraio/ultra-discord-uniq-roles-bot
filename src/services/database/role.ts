@@ -349,3 +349,83 @@ export async function getAllDocuments(): Promise<I.Response<dRole[] | string>> {
 
     return { status: true, data: response };
 }
+
+/**
+ * Gets the current UOS holder role configuration.
+ *
+ * @export
+ * @return {(Promise<I.Response<dRole | string>>)}
+ */
+export async function getUosHolderRole(): Promise<I.Response<dRole | string>> {
+    const db = await shared.getDatabase();
+    if (typeof db === 'undefined') {
+        return { status: false, data: 'database could not be found' };
+    }
+
+    const collection = db.collection(COLLECTION_NAME);
+    const uosHolderDocument = await collection.findOne<dRole>({ isUosHolderRole: true }).catch((err) => {
+        return null;
+    });
+
+    if (uosHolderDocument === null || typeof uosHolderDocument === 'undefined') {
+        return { status: false, data: 'UOS holder role was not found' };
+    }
+
+    return { status: true, data: uosHolderDocument };
+}
+
+/**
+ * Sets the UOS holder role, removing any existing UOS holder role.
+ * This creates a special role that is managed separately from regular UOS threshold roles.
+ *
+ * @export
+ * @param {number} uosThreshold
+ * @param {string} discordRole
+ * @return {Promise<I.Response<string>>}
+ */
+export async function setUosHolderRole(uosThreshold: number, discordRole: string): Promise<I.Response<string>> {
+    const db = await shared.getDatabase();
+    if (typeof db === 'undefined') {
+        return { status: false, data: 'database could not be found' };
+    }
+
+    const collection = db.collection<Role>(COLLECTION_NAME);
+
+    // First, remove any existing UOS holder role
+    await collection.updateMany(
+        { isUosHolderRole: true },
+        { $unset: { isUosHolderRole: true } }
+    );
+
+    // Check if the role already exists and has factories
+    const roleDocument = await getDocumentByRole(discordRole);
+    if (typeof roleDocument.data !== 'string') {
+        if (roleDocument.data.factories && roleDocument.data.factories.length > 0) {
+            return { status: false, data: 'cannot use factory and UOS holder role requirement in the same role' };
+        }
+    }
+
+    // Set the new UOS holder role
+    const result = await collection
+        .findOneAndUpdate(
+            { role: discordRole }, // query filter
+            { 
+                $set: { 
+                    role: discordRole, 
+                    uosThreshold: uosThreshold,
+                    isUosHolderRole: true 
+                }
+            }, // data to update
+            { upsert: true }
+        )
+        .catch((err) => {
+            console.error(err);
+            return undefined;
+        });
+
+    if (!result || !result.ok) {
+        return { status: false, data: 'could not set UOS holder role' };
+    }
+
+    return { status: true, data: 'UOS holder role set successfully' };
+}
