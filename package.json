@@ -1,6 +1,6 @@
 {
     "name": "ultra-discord-uniq-roles-bot",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "description": "Ultra Uniq Bot for Discord Servers",
     "scripts": {
         "build": "tsc --build --clean && tsc ",
