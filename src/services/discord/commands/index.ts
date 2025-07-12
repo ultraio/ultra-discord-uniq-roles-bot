@@ -8,3 +8,4 @@ import './removeuosthreshold';
 import './deleterole';
 import './printrole';
 import './hello';
+import './setuosholderrole';

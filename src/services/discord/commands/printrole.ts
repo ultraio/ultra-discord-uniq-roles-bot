@@ -62,6 +62,9 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
                     if (role.uosThreshold && role.uosThreshold > 0) {
                         appendString += `UOS threshold: ${role.uosThreshold}\n`;
                     }
+                    if (role.isUosHolderRole) {
+                        appendString += `🏆 UOS Holder Role\n`;
+                    }
                 }
                 appendString += `\n`;
 

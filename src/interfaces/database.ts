@@ -82,6 +82,14 @@ export interface dRole extends Document {
      * @memberof dRole
      */
     uosThreshold: number;
+
+    /**
+     * Whether this role is the special UOS holder role.
+     *
+     * @type {boolean}
+     * @memberof dRole
+     */
+    isUosHolderRole?: boolean;
 }
 
 export function isRoleEmpty(role: dRole): boolean {
