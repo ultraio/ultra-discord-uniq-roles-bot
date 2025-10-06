@@ -304,7 +304,11 @@ export async function getUosThresholdDocuments(): Promise<I.Response<dRole[] | s
     }
 
     const collection = db.collection(COLLECTION_NAME);
-    const roleDocuments = await collection.find<dRole>({ uosThreshold: { $ne : null } });
+    // Exclude UOS holder role from regular threshold roles
+    const roleDocuments = await collection.find<dRole>({ 
+        uosThreshold: { $ne : null },
+        isUosHolderRole: { $ne: true }
+    });
     let response: dRole[] = [];
     while (await roleDocuments.hasNext().catch((err) => {
         return null;
