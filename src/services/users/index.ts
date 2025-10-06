@@ -59,6 +59,11 @@ export async function refreshUser(discord: string, blockchainId: string) {
 
     let amountAdded = 0;
     let amountRemoved = 0;
+    
+    // Track role changes by type
+    let factoryAdded = 0, factoryRemoved = 0;
+    let thresholdAdded = 0, thresholdRemoved = 0;
+    let holderAdded = 0, holderRemoved = 0;
 
     // Loop through each role, and check if it's a factory role and/or UOS threshold role
     for (let userRole of userData?.roles) {
@@ -108,6 +113,7 @@ export async function refreshUser(discord: string, blockchainId: string) {
         await userData.member.roles.remove(userRole, 'No Longer Owns Token').catch((err) => defaultFailedToAssignRolesWarning('User no longer owns token'));
 
         amountRemoved += 1;
+        factoryRemoved += 1;
     }
 
     // Re-loop the tokens; and determine if a role exists for it
@@ -132,12 +138,14 @@ export async function refreshUser(discord: string, blockchainId: string) {
         await userData.member.roles.add(response.data.role).catch((err) => defaultFailedToAssignRolesWarning('Adding factory role to user'));
 
         amountAdded += 1;
+        factoryAdded += 1;
     }
 
     // Update UOS roles only if we were able to get UOS balance
     if (uosBalance) {
         // Handle regular UOS threshold roles
         let uosThresholdDocuments = await role.getUosThresholdDocuments();
+        util.log.debug(`[DB] UOS Threshold Docs: ${uosThresholdDocuments.status ? (typeof uosThresholdDocuments.data === 'string' ? 'Error' : `Found ${uosThresholdDocuments.data.length}`) : 'Failed'}`);
         if (uosThresholdDocuments && uosThresholdDocuments.status && typeof uosThresholdDocuments.data !== 'string') {
             // Sort in descending order
             let roles = uosThresholdDocuments.data.sort((a, b) => b.uosThreshold - a.uosThreshold);
@@ -150,45 +158,63 @@ export async function refreshUser(discord: string, blockchainId: string) {
 
                         // If user already has that role, skip
                         if (!userData.member.roles.cache.has(roles[i].role)) {
+                            util.log.debug(`[UOS Threshold] Adding role (threshold: ${roles[i].uosThreshold}, balance: ${uosBalance})`);
                             await userData.member.roles.add(roles[i].role).catch((err) => defaultFailedToAssignRolesWarning('Adding UOS threshold role to user'));
                             amountAdded += 1;
+                            thresholdAdded += 1;
                         }
                     }
                 }
 
                 // If already has a role with higher UOS threshold - remove the lower roles
                 if (i !== identifiedRole && userData.member.roles.cache.has(roles[i].role)) {
+                    util.log.debug(`[UOS Threshold] Removing role (threshold: ${roles[i].uosThreshold}, balance: ${uosBalance})`);
                     await userData.member.roles.remove(roles[i].role, 'No Longer Within the UOS Threshold').catch((err) => defaultFailedToAssignRolesWarning('User is no longer within UOS threshold'));
                     amountRemoved += 1;
+                    thresholdRemoved += 1;
                 }
             }
         }
 
         // Handle UOS holder role (special role that replaces all other UOS threshold roles)
         let uosHolderRole = await role.getUosHolderRole();
+        util.log.debug(`[DB] UOS Holder Role: ${uosHolderRole.status ? (typeof uosHolderRole.data === 'string' ? 'Error' : 'Found') : 'Not configured'}`);
         if (uosHolderRole && uosHolderRole.status && typeof uosHolderRole.data !== 'string') {
             const holderRole = uosHolderRole.data;
+            const hasRole = userData.member.roles.cache.has(holderRole.role);
             
             // Check if user meets the UOS holder threshold
             if (uosBalance >= holderRole.uosThreshold) {
                 // If user doesn't have the UOS holder role, add it
-                if (!userData.member.roles.cache.has(holderRole.role)) {
+                if (!hasRole) {
+                    util.log.debug(`[UOS Holder] Adding role (threshold: ${holderRole.uosThreshold}, balance: ${uosBalance})`);
                     await userData.member.roles.add(holderRole.role).catch((err) => defaultFailedToAssignRolesWarning('Adding UOS holder role to user'));
                     amountAdded += 1;
+                    holderAdded += 1;
                 }
             } else {
                 // If user doesn't meet the threshold but has the role, remove it
-                if (userData.member.roles.cache.has(holderRole.role)) {
+                if (hasRole) {
+                    util.log.debug(`[UOS Holder] Removing role (threshold: ${holderRole.uosThreshold}, balance: ${uosBalance})`);
                     await userData.member.roles.remove(holderRole.role, 'No Longer Meets UOS Holder Threshold').catch((err) => defaultFailedToAssignRolesWarning('User no longer meets UOS holder threshold'));
                     amountRemoved += 1;
+                    holderRemoved += 1;
                 }
             }
         }
     }
 
-    util.log.info(
-        `${userData.member.user.username}#${userData.member.user.discriminator} | Roles +${amountAdded} & -${amountRemoved} | Token Count: ${tokenCount}`
-    );
+    // Log role changes by type for better visibility
+    const username = `${userData.member.user.username}#${userData.member.user.discriminator}`;
+    if (amountAdded > 0) {
+        util.log.info(`${username} | ADDED ${amountAdded} role(s) - Factory: ${factoryAdded}, Threshold: ${thresholdAdded}, Holder: ${holderAdded}`);
+    }
+    if (amountRemoved > 0) {
+        util.log.info(`${username} | REMOVED ${amountRemoved} role(s) - Factory: ${factoryRemoved}, Threshold: ${thresholdRemoved}, Holder: ${holderRemoved}`);
+    }
+    if (amountAdded === 0 && amountRemoved === 0) {
+        util.log.info(`${username} | No role changes | Token Count: ${tokenCount}`);
+    }
 }
 
 /**

@@ -41,3 +41,13 @@ export function warn(msg: string): void {
 export function error(msg: string): void {
     console.error(`[X]${getTimeBlock()} ${msg}`);
 }
+
+/**
+ * Log a debug message.
+ *
+ * @export
+ * @param {string} msg
+ */
+export function debug(msg: string): void {
+    console.log(`[D]${getTimeBlock()} ${msg}`);
+}

@@ -314,7 +314,10 @@ export async function getUosThresholdDocuments(): Promise<I.Response<dRole[] | s
         });
         // Search filter already checked that uosThreshold is not null
         if (document){
-            if (document.uosThreshold > 0) response.push(document);
+            if (document.uosThreshold > 0) {
+                console.log(`[DB Debug] UOS Threshold role found: threshold=${document.uosThreshold}, isHolder=${document.isUosHolderRole || false}`);
+                response.push(document);
+            }
         }
         else break;
     }
@@ -371,6 +374,7 @@ export async function getUosHolderRole(): Promise<I.Response<dRole | string>> {
         return { status: false, data: 'UOS holder role was not found' };
     }
 
+    console.log(`[DB Debug] UOS Holder role found: threshold=${uosHolderDocument.uosThreshold}`);
     return { status: true, data: uosHolderDocument };
 }
 

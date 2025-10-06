@@ -95,6 +95,7 @@ export interface dRole extends Document {
 export function isRoleEmpty(role: dRole): boolean {
     if (role.factories && role.factories.length > 0) return false;
     if (role.uosThreshold && role.uosThreshold > 0) return false;
+    if (role.isUosHolderRole && role.isUosHolderRole === true) return false;
     return true;
 }
 
