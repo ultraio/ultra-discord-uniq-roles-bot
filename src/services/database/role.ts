@@ -324,10 +324,7 @@ export async function getUosThresholdDocuments(): Promise<I.Response<dRole[] | s
         if (document){
             // Explicitly skip UOS holder roles
             if (document.uosThreshold > 0 && !document.isUosHolderRole) {
-                console.log(`[DB Debug] UOS Threshold role found: threshold=${document.uosThreshold}, isHolder=${document.isUosHolderRole || false}`);
                 response.push(document);
-            } else if (document.isUosHolderRole) {
-                console.log(`[DB Debug] Skipping UOS Holder role in threshold query: threshold=${document.uosThreshold}`);
             }
         }
         else break;
@@ -385,7 +382,6 @@ export async function getUosHolderRole(): Promise<I.Response<dRole | string>> {
         return { status: false, data: 'UOS holder role was not found' };
     }
 
-    console.log(`[DB Debug] UOS Holder role found: threshold=${uosHolderDocument.uosThreshold}`);
     return { status: true, data: uosHolderDocument };
 }
 
