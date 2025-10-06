@@ -307,7 +307,11 @@ export async function getUosThresholdDocuments(): Promise<I.Response<dRole[] | s
     // Exclude UOS holder role from regular threshold roles
     const roleDocuments = await collection.find<dRole>({ 
         uosThreshold: { $ne : null },
-        isUosHolderRole: { $ne: true }
+        $or: [
+            { isUosHolderRole: { $exists: false } },
+            { isUosHolderRole: false },
+            { isUosHolderRole: null }
+        ]
     });
     let response: dRole[] = [];
     while (await roleDocuments.hasNext().catch((err) => {
@@ -318,9 +322,12 @@ export async function getUosThresholdDocuments(): Promise<I.Response<dRole[] | s
         });
         // Search filter already checked that uosThreshold is not null
         if (document){
-            if (document.uosThreshold > 0) {
+            // Explicitly skip UOS holder roles
+            if (document.uosThreshold > 0 && !document.isUosHolderRole) {
                 console.log(`[DB Debug] UOS Threshold role found: threshold=${document.uosThreshold}, isHolder=${document.isUosHolderRole || false}`);
                 response.push(document);
+            } else if (document.isUosHolderRole) {
+                console.log(`[DB Debug] Skipping UOS Holder role in threshold query: threshold=${document.uosThreshold}`);
             }
         }
         else break;
