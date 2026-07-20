@@ -72,6 +72,17 @@ export default interface Config {
     SINGLE_USER_REFRESH_INTERVAL_MS: number;
 
     /**
+     * How many users may be refreshed concurrently during a sweep.
+     *
+     * Each refresh issues several paginated chain queries plus Discord API calls, so an
+     * unbounded sweep saturates the event loop and starves the /health endpoint.
+     *
+     * @type {number}
+     * @memberof Config
+     */
+    USER_REFRESH_CONCURRENCY: number;
+
+    /**
      * Name of the MongoDB database to use
      *
      * @type {string}
