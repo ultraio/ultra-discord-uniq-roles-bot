@@ -222,33 +222,60 @@ async function updateUsers() {
     const startTime = Date.now();
     util.log.info(`Refresh Started`);
 
-    const config = util.config.get();
+    try {
+        const config = util.config.get();
 
-    const db = await shared.getDatabase();
-    if (typeof db === 'undefined') {
+        const db = await shared.getDatabase();
+        if (typeof db === 'undefined') {
+            return;
+        }
+
+        const collection = db.collection(user.getCollectionName());
+        const cursor = collection.find();
+
+        let document: I.db.dDiscordUser | null;
+        let userInfo: I.db.dDiscordUser[] = [];
+        while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
+            if (document) userInfo.push(document);
+        }
+
+        // Refresh through a bounded worker pool. Previously every user's refresh was pushed
+        // without being awaited, so the entire population ran concurrently — each one issuing
+        // several paginated chain queries plus Discord API calls. That saturated the event loop
+        // and starved the /health endpoint, which is what got the pod liveness-killed before a
+        // single sweep had ever completed.
+        const concurrency = Math.max(1, Math.min(config.USER_REFRESH_CONCURRENCY, userInfo.length));
+        let nextIndex = 0;
+
+        const worker = async () => {
+            while (true) {
+                const index = nextIndex++;
+                if (index >= userInfo.length) {
+                    return;
+                }
+
+                try {
+                    await refreshUser(userInfo[index].discord, userInfo[index].blockchain);
+                } catch (err) {
+                    // One bad user must never abort the whole sweep.
+                    util.log.warn(`Refresh failed for ${userInfo[index].discord} | ${err}`);
+                }
+
+                if (config.SINGLE_USER_REFRESH_INTERVAL_MS > 0) {
+                    await new Promise((r) => setTimeout(r, config.SINGLE_USER_REFRESH_INTERVAL_MS));
+                }
+            }
+        };
+
+        await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+        util.log.info(`Refresh Finished | ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
+    } finally {
+        // Must be in a finally: previously a throw anywhere above skipped the reset, leaving
+        // isUpdating permanently true so every later interval returned early — the bot would
+        // silently stop refreshing forever with no error surfaced.
         isUpdating = false;
-        return;
     }
-
-    const promises: Array<Promise<void>> = [];
-    const collection = db.collection(user.getCollectionName());
-    const cursor = collection.find();
-
-    let document: I.db.dDiscordUser | null;
-    let userInfo: I.db.dDiscordUser[] = [];
-    while ((document = (await cursor.next()) as I.db.dDiscordUser)) {
-        if (document) userInfo.push(document);
-    }
-
-    for (let i = 0; i < userInfo.length; i++) {
-        promises.push(refreshUser(userInfo[i].discord, userInfo[i].blockchain));
-        await new Promise((r) => setTimeout(r, config.SINGLE_USER_REFRESH_INTERVAL_MS));
-    }
-
-    await Promise.all(promises);
-
-    util.log.info(`Refresh Finished | ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
-    isUpdating = false;
 }
 
 /**
