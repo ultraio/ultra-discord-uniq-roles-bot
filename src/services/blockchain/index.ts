@@ -17,10 +17,26 @@ const apiNodes = [
 ];
 const maxApiRetries = apiNodes.length;
 
+// Every chain request MUST have a hard timeout. cross-fetch delegates to node-fetch,
+// whose default timeout is 0 — i.e. wait forever. With no timeout a single stalled socket
+// makes refreshUser() never settle, so Promise.all in updateUsers() never resolves, the
+// `finally` that clears isUpdating never runs, and every subsequent interval returns early
+// at the `if (isUpdating) return` guard. The bot then stops refreshing roles PERMANENTLY
+// while staying 1/1 Ready and passing its liveness probe, so nothing alarms.
+//
+// That is not hypothetical: uniq-token-discord-bot-prod hung this way on 2026-07-17 and
+// was not noticed for 3 days 10 hours. A timeout turns that silent permanent hang into an
+// ordinary request failure, which roundRobingRequest already handles by rotating to the
+// next API node.
+const REQUEST_TIMEOUT_MS = Number(process.env.BLOCKCHAIN_REQUEST_TIMEOUT_MS) || 15000;
+
 const apis = apiNodes.map((n) => new Api({
     rpc: new JsonRpc(n, {
         fetch(input, init) {
-            return crossFetch(input as string, init);
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+            return crossFetch(input as string, { ...init, signal: controller.signal } as any)
+                .finally(() => clearTimeout(timer));
         },
     }),
     textEncoder: new TextEncoder(),

@@ -287,9 +287,19 @@ async function updateUsers() {
  */
 export function init(msTimeBetweenUpdates = 60000) {
     if (!interval) {
-        interval = setInterval(updateUsers, msTimeBetweenUpdates);
+        // Both call sites must swallow rejections. updateUsers() is async, so an
+        // unhandled rejection from a sweep-level failure (a Mongo blip in
+        // shared.getDatabase() or cursor.next(), both outside the per-user try/catch)
+        // would terminate the process on Node 18+, which defaults
+        // --unhandled-rejections=throw. The `finally` inside updateUsers still clears
+        // isUpdating, so the next tick recovers on its own.
+        const runSweep = () => {
+            updateUsers().catch((err) => util.log.warn(`Refresh sweep failed | ${err}`));
+        };
+
+        interval = setInterval(runSweep, msTimeBetweenUpdates);
         util.log.info(`User Refresh Every ${Math.floor(msTimeBetweenUpdates / 1000)}s`);
-        updateUsers();
+        runSweep();
     }
 
     return true;
