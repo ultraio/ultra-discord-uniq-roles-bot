@@ -6,6 +6,7 @@ import {
     ButtonInteraction,
     ChatInputCommandInteraction,
     Client,
+    Events,
     Guild,
     GuildMember,
     Interaction,
@@ -205,16 +206,16 @@ export async function init(token: string): Promise<boolean> {
 
         const handleError = (err: Error) => {
             Utility.log.error(`Invalid Token, did not Authenticate`);
-            client.off('ready', handleReady);
+            client.off(Events.ClientReady, handleReady);
             return resolve(false);
         };
 
         const handleReady = async () => {
             Utility.log.info(`Authenticated`);
             Utility.log.info(`Discord Bot is Running`);
-            client.off('error', handleError);
-            client.on('interactionCreate', handleInteraction);
-            client.on('roleDelete', handleRoleDelete);
+            client.off(Events.Error, handleError);
+            client.on(Events.InteractionCreate, handleInteraction);
+            client.on(Events.GuildRoleDelete, handleRoleDelete);
 
             await import('./commands').catch((err) => {
                 Utility.log.error(`Error: ${err}`);
@@ -230,8 +231,8 @@ export async function init(token: string): Promise<boolean> {
             return resolve(true);
         };
 
-        client.once('ready', handleReady);
-        client.once('error', handleError);
+        client.once(Events.ClientReady, handleReady);
+        client.once(Events.Error, handleError);
         client.login(token);
     });
 }
