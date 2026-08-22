@@ -3,19 +3,21 @@ import { JsSignatureProvider } from 'enf-eosjs/dist/eosjs-jssig';
 import { TextEncoder, TextDecoder } from 'text-encoding';
 import crossFetch from 'cross-fetch';
 
-// This is an unused private key, it's meant for testing but in this case we just need it to exist here.
-const defaultPrivateKey = '5JtUScZK2XEp3g9gh7F8bwtPTRAkASmNrrftmx4AxDKD5K4zDnr';
 let lastApiNodeIndex = 0;
-const apiNodes = [
+export const apiNodes = [
     'https://api.mainnet.ultra.io/',
-    'http://ultra.api.eosnation.io/',
     'https://ultra.eosrio.io/',
-    'https://api.ultra.cryptolions.io/',
-    'https://ultra.eosusa.io',
-    'https://api.ultra.eossweden.org',
-    'https://ultra-api.eoseoul.io/'
+    'https://ultra.eosusa.io/',
+    'https://api.ultra.eossweden.org/',
+    // Cryptolions is capability-correct but rate-limits by dropping TCP
+    // connections, so keep it as the last-resort endpoint.
+    'https://api.ultra.cryptolions.io/'
 ];
 const maxApiRetries = apiNodes.length;
+
+export const accountNamesFromAuthorizers = (
+    accounts: Array<{ account_name: string }>
+): string[] => [...new Set<string>(accounts.map(({ account_name }) => account_name))];
 
 // Every chain request MUST have a hard timeout. cross-fetch delegates to node-fetch,
 // whose default timeout is 0 — i.e. wait forever. With no timeout a single stalled socket
@@ -41,7 +43,8 @@ const apis = apiNodes.map((n) => new Api({
     }),
     textEncoder: new TextEncoder(),
     textDecoder: new TextDecoder(),
-    signatureProvider: new JsSignatureProvider([defaultPrivateKey])
+    // The bot performs read-only RPC calls and must not carry a signing key.
+    signatureProvider: new JsSignatureProvider([])
 }));
 
 /**
@@ -82,9 +85,14 @@ const roundRobingRequest = async (callback: (api: Api) => Promise<any>) => {
  * @param {string} publicKey
  * @return {Promise<string[] | null>}
  */
-const roundRobinHistoryGetKeyAccounts = async (publicKey: string) => {
-    const { account_names } = await roundRobingRequest((api) => { return api.rpc.history_get_key_accounts(publicKey); });
-    if (account_names) return account_names;
+const roundRobinGetAccountsByAuthorizers = async (publicKey: string) => {
+    const result = await roundRobingRequest((api) => api.rpc.fetch(
+        '/v1/chain/get_accounts_by_authorizers',
+        { keys: [publicKey], accounts: [] }
+    ));
+    if (result?.accounts) {
+        return accountNamesFromAuthorizers(result.accounts);
+    }
     return null;
 }
 
@@ -124,7 +132,7 @@ const roundRobingGetTableRows = async ({ json, code, scope, table, table_key, lo
  * @return {Promise<string[] | null>}
  */
 export async function getAccountsByKey(publicKey: string): Promise<string[] | null> {
-    const account_names = await roundRobinHistoryGetKeyAccounts(publicKey);
+    const account_names = await roundRobinGetAccountsByAuthorizers(publicKey);
     if (account_names) return account_names;
     console.log(`Failed to get accounts by key from any API`);
     return null;
