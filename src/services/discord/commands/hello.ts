@@ -20,7 +20,7 @@ async function handleInteraction(interaction: ChatInputCommandInteraction) {
             ephemeral: true, // Makes responses 'only you can see this'
         });
     }
-    if (!interaction.channel) {
+    if (!interaction.channel || !('send' in interaction.channel)) {
         return interaction.reply({
             content: 'Not in a channel',
             ephemeral: true, // Makes responses 'only you can see this'

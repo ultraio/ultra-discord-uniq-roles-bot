@@ -1,25 +1,23 @@
-FROM node:lts-alpine3.16 as build-env
+FROM node:22-alpine3.22 AS build-env
 
 WORKDIR /app
 
-# Add required files
-ADD src /app/src
-ADD package.json /app/package.json
-ADD package-lock.json /app/package-lock.json
-ADD tsconfig.json /app/tsconfig.json
+COPY package.json package-lock.json tsconfig.json ./
+COPY src ./src
 
-# Install app dependencies
-RUN npm install
-RUN npm run build
+RUN npm ci && npm run build
 
 
-FROM node:lts-alpine3.16
+FROM node:22-alpine3.22
 
 WORKDIR /app
-COPY --from=build-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/dist /app/dist
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build-env --chown=node:node /app/dist ./dist
 
 # Expose express server port
 EXPOSE 3000
+
+USER node
 
 ENTRYPOINT [ "node", "dist/index.js" ]

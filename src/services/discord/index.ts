@@ -12,7 +12,10 @@ import {
     RESTPostAPIChatInputApplicationCommandsJSONBody,
     Role,
     SlashCommandBuilder,
+    SlashCommandOptionsOnlyBuilder,
 } from 'discord.js';
+
+type RegisteredSlashCommand = SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
 
 type InteractionCallback = (interaction: Interaction) => Promise<any>;
 type ChatInputCommandInteractionCallback = (interaction: ChatInputCommandInteraction) => Promise<any>;
@@ -28,7 +31,7 @@ const client: Client = new Client({
 
 const commands: {
     [name: string]: {
-        original: SlashCommandBuilder;
+        original: RegisteredSlashCommand;
         callback: InteractionCallback | ChatInputCommandInteractionCallback;
         buttonCallbacks: CommandButtonCallback[];
     };
@@ -107,11 +110,11 @@ async function handleRoleDelete(role: Role) {
  * Register a Slash Command
  *
  * @export
- * @param {SlashCommandBuilder} name
+ * @param {RegisteredSlashCommand} command
  * @param {(interaction: Interaction) => void} callback
  */
 export function register(
-    command: SlashCommandBuilder,
+    command: RegisteredSlashCommand,
     callback: InteractionCallback | ChatInputCommandInteractionCallback,
     buttonCallbacks: CommandButtonCallback[] = [],
 ) {
